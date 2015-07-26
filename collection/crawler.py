@@ -4,7 +4,7 @@ import praw
 import random
 import string
 import threading
-from pymongo import ReturnDocument
+from pymongo.collection import ReturnDocument
 from datetime import datetime, timedelta
 from config import SUBREDDITS, CREDENTIALS
 from Queue import Queue
@@ -21,14 +21,8 @@ class RedditApiClient(object):
     CLOUD_QUERY = 'timestamp:{end}..{start}'
     CLOUD_SEARCH = 'cloudsearch'
 
-    def __init__(self, username, password):
-        """
-        Input:
-            username <string> : reddit username
-            password <string> : reddit password
-        """
-        self.reddit = praw.Reddit(self.random_name())
-        self.reddit.login(username, password)
+    def __init__(self):
+        self.reddit = praw.Reddit(user_agent=self.random_name())
         return
 
     def get_posts(self, subreddit, start, end, sort='new'):
@@ -160,7 +154,7 @@ class MultiThreadedCrawler(object):
 
             client = MongoDBService(mongodb_client)
             worker = RedditWorker(
-                RedditApiClient(username, password), client,  q)
+                RedditApiClient(), client,  q)
             worker.daemon = True
             worker.start()
         for college in self.colleges:
@@ -181,8 +175,6 @@ class MongoDBService(object):
         self.comment_collection = comment_collection
 
     def save(self, posts, college_info, get_comments):
-        post_collection = self.get_post_collection()
-        comment_collection = self.get_comment_collection()
         post_count = 0
         comment_count = 0
         for post in posts:
