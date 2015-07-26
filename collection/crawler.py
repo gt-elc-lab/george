@@ -147,6 +147,7 @@ class MultiThreadedCrawler(object):
         Activate the threads
         """
         q = Queue()
+        # uri = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
         mongodb_client = pymongo.MongoClient()['reddit']
         for i in range(16):
             logger.info('Spawned #{}'.format(i))
