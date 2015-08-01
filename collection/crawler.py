@@ -103,7 +103,7 @@ class RedditWorker(threading.Thread):
             college_info = self.q.get()
             logging.info('Started {}'.format(college_info['name']))
             start_date = datetime.now()
-            end_date = self.get_start_time(college_info)
+            end_date = self.get_start_time(college_info) - timedelta(hours=12)
             if not end_date:
                 # The college is not in the database so just get the last month
                 # worth of data
@@ -115,7 +115,6 @@ class RedditWorker(threading.Thread):
             self.q.task_done()
 
     def crawl(self, college_info, start, end):
-        college = college_info['name']
         subreddit = college_info['subreddit']
         upper = start
         lower = upper - self.interval
@@ -147,7 +146,6 @@ class MultiThreadedCrawler(object):
         Activate the threads
         """
         q = Queue()
-        # uri = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
         mongodb_client = pymongo.MongoClient()['reddit']
         for i in range(16):
             logger.info('Spawned #{}'.format(i))
