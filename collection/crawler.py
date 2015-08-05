@@ -103,10 +103,14 @@ class RedditWorker(threading.Thread):
             college_info = self.q.get()
             logging.info('Started {}'.format(college_info['name']))
             start_date = datetime.now()
-            end_date = self.get_start_time(college_info) - timedelta(hours=12)
-            if not end_date:
+            end_date = self.get_start_time(college_info)
+            if end_date:
+            	# Pad by a few hours to make sure we pick up any new comments
+            	# for relatively new posts.
+                end_date -= timedelta(hours=12)
+            else:
                 # The college is not in the database so just get the last month
-                # worth of data
+                # worth of data.
                 end_date = start_date - timedelta(weeks=4)
             self.crawl(college_info, start_date, end_date)
             logger.info('Finished {} from {} to {}'.format(
