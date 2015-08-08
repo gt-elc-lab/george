@@ -1,0 +1,26 @@
+body {
+	padding: 0px;
+	margin: 0px;
+}
+
+.home-container {
+	width: 100%;
+	min-height: 450px;
+	color: #fff;
+	text-align: center;
+	background-color: #D8D80D;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	flex: 1 1 auto;
+}
+
+.home-content {
+	
+}
+
+.home-content h1 {
+	font-size: 10rem;
+}
