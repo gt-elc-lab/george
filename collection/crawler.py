@@ -1,3 +1,4 @@
+import dao
 import logging
 import pymongo
 import praw
@@ -12,8 +13,6 @@ from Queue import Queue
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
-
-# TODO(faisal): Convert from password authentication to OAuth.
 
 class RedditApiClient(object):
     """ Wrapper around praw """
@@ -136,13 +135,11 @@ class RedditWorker(threading.Thread):
 
 class MultiThreadedCrawler(object):
 
-    def __init__(self, credentials, colleges):
+    def __init__(self, colleges):
         """
         Input:
-            credentials <dict>: {'username', 'password'}
             colleges[] <dict>: array of {'name', 'subreddit'}
         """
-        self.credentials = credentials
         self.colleges = colleges
 
     def start(self):
@@ -151,10 +148,8 @@ class MultiThreadedCrawler(object):
         """
         q = Queue()
         mongodb_client = pymongo.MongoClient()['reddit']
-        for i in range(16):
+        for i in range(8):
             logger.info('Spawned #{}'.format(i))
-            username, password = self.credentials
-
             client = MongoDBService(mongodb_client)
             worker = RedditWorker(
                 RedditApiClient(), client,  q)
@@ -164,6 +159,7 @@ class MultiThreadedCrawler(object):
             logger.info('Queueing {}'.format(college['name']))
             q.put(college)
             # Lets the main thread exit even if the workers are blocking.
+
         # Forces the main thread to wait for the queue to finish processing
         # all the tasks.
         q.join()
@@ -171,19 +167,17 @@ class MultiThreadedCrawler(object):
 
 class MongoDBService(object):
 
-    def __init__(self, mongo_client, post_collection='posts',
-            comment_collection='comments'):
-        self.db = mongo_client
-        self.post_collection = post_collection
-        self.comment_collection = comment_collection
+    def __init__(self, mongo_client):
+        self.post_dao = dao.PostDao(mongo_client)
+        self.comment_dao = dao.CommentDao(mongo_client)
 
     def save(self, posts, college_info, get_comments):
         post_count = 0
         comment_count = 0
         for post in posts:
             # TODO(faisal): add error handling capability.
-            comment_records = [self.serialize_comment(comment, college_info) 
-                for comment in get_comments(post)]
+            comment_records = [self.serialize_comment(comment, college_info)
+                               for comment in get_comments(post)]
             post_record = self.serialize_post(post, college_info)
             comment_ids = []
             if comment_records:
@@ -192,7 +186,7 @@ class MongoDBService(object):
             # Join the post to its comments by storing the object ids of the
             # comments
             post_record['comments'] = comment_ids
-            self.insert_post(post_record)
+            self.post_dao.insert_post(post_record)
             post_count += 1
             comment_count += len(comment_ids)
         logger.info('Saved: {} {} posts {} comments'.format(
@@ -202,16 +196,9 @@ class MongoDBService(object):
     def insert_comments(self, comments):
         inserted = []
         for comment in comments:
-            _id = self.get_comment_collection().find_one_and_replace(
-                {'reddit_id': comment['reddit_id']}, comment, projection={'_id': True},
-                return_document=ReturnDocument.AFTER, upsert=True)
+            _id = self.comment_dao.insert_comment(comment)
             inserted.append(_id)
         return inserted
-
-    def insert_post(self, post):
-        self.get_post_collection().find_one_and_replace(
-            {'reddit_id': post['reddit_id']}, post, projection={'_id': True},
-            return_document=ReturnDocument.AFTER, upsert=True)
 
     def last_post_date(self, college_info):
         """
@@ -224,7 +211,7 @@ class MongoDBService(object):
         Returns: A datetime object
         """
         college = college_info['name']
-        last_post_query = self.get_post_collection().find(
+        last_post_query = self.post_dao.collection.find(
             {'college': college}).sort(
                 'created_utc', pymongo.DESCENDING).limit(1)
         last_post = list(last_post_query)
@@ -233,13 +220,8 @@ class MongoDBService(object):
         # We haven't crawled the subreddit at all.
         return False
 
-    def get_post_collection(self):
-        return self.db[self.post_collection]
-
-    def get_comment_collection(self):
-        return self.db[self.comment_collection]
-
-    def serialize_post(self, submission, college_info):
+    @staticmethod
+    def serialize_post(submission, college_info):
         """
         Convert a praw post object to a dictionary.
 
@@ -263,7 +245,8 @@ class MongoDBService(object):
             'comments': []
         }
 
-    def serialize_comment(self, comment, college_info):
+    @staticmethod
+    def serialize_comment(comment, college_info):
         """
         Convert a praw  comment object to a dictionary
         Input:
@@ -282,7 +265,3 @@ class MongoDBService(object):
             'subreddit' : subreddit,
             'created_utc': datetime.utcfromtimestamp(comment.created_utc)
         }
-
-if __name__ == '__main__':
-    multi = MultiThreadedCrawler(CREDENTIALS, SUBREDDITS)
-    multi.start()
