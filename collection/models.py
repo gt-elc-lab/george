@@ -15,6 +15,7 @@ class Post(object):
     	"""
         return Post(**mongo_record)
 
+    @staticmethod
     def from_reddit_object(reddit):
         pass
 
@@ -41,6 +42,7 @@ class Comment(object):
     	"""
         return Comment(**mongo_record)
 
+    @staticmethod
     def from_reddit_object(reddit):
         pass
 

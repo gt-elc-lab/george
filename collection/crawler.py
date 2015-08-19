@@ -168,8 +168,7 @@ class MultiThreadedCrawler(object):
 class MongoDBService(object):
 
     def __init__(self, mongo_client):
-        self.post_dao = dao.PostDao(mongo_client)
-        self.comment_dao = dao.CommentDao(mongo_client)
+        self.dao = dao.MongoDao()
 
     def save(self, posts, college_info, get_comments):
         post_count = 0
@@ -186,7 +185,7 @@ class MongoDBService(object):
             # Join the post to its comments by storing the object ids of the
             # comments
             post_record['comments'] = comment_ids
-            self.post_dao.insert_post(post_record)
+            self.dao.insert_post(post_record)
             post_count += 1
             comment_count += len(comment_ids)
         logger.info('Saved: {} {} posts {} comments'.format(
@@ -196,7 +195,7 @@ class MongoDBService(object):
     def insert_comments(self, comments):
         inserted = []
         for comment in comments:
-            _id = self.comment_dao.insert_comment(comment)
+            _id = self.dao.insert_comment(comment)
             inserted.append(_id)
         return inserted
 
@@ -211,7 +210,7 @@ class MongoDBService(object):
         Returns: A datetime object
         """
         college = college_info['name']
-        last_post_query = self.post_dao.collection.find(
+        last_post_query = self.dao.post_collection.find(
             {'college': college}).sort(
                 'created_utc', pymongo.DESCENDING).limit(1)
         last_post = list(last_post_query)
@@ -220,7 +219,6 @@ class MongoDBService(object):
         # We haven't crawled the subreddit at all.
         return False
 
-    # TODO(simplyfaisal): Move the two functions into the dao layer
     @staticmethod
     def serialize_post(submission, college_info):
         """

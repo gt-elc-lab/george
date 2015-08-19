@@ -3,7 +3,7 @@ import pymongo
 from bson.objectid import ObjectId
 
 
-class PostDao(object):
+class MongoDao(object):
 
     def __init__(self, mongo_client=None):
         self.db = mongo_client or pymongo.MongoClient()['reddit']
@@ -17,11 +17,14 @@ class PostDao(object):
     	
     	Returns a model.Post object
     	"""
-        post_record = self.db.posts.find_one({'_id': ObjectId(post_id)})
+        if type(post_id) == str:
+            post_id = ObjectId(post_id)
+        post_record = self.db.posts.find_one({'_id': post_id})
         return models.Post.from_record(post_record)
 
     def get_post_comments(self, post_id):
-        pass
+        post = self.get_post(post_id)
+        return [self.get_comment(comment_id) for comment_id in post.comments]
 
     def insert_post(self, post_record):
     	"""
@@ -37,16 +40,13 @@ class PostDao(object):
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
 
     @property
-    def collection(self):
+    def post_collection(self):
         return self.db.posts
 
-
-class CommentDao(object):
-    def __init__(self, mongo_client=None):
-        self.db = mongo_client or pymongo.MongoClient()['reddit']
-
     def get_comment(self, comment_id):
-        comment_record = self.db.comments.find_one({'_id': ObjectId(comment_id)})
+        if type(comment_id) == str:
+            comment_id = ObjectId(comment_id)
+        comment_record = self.db.comments.find_one({'_id': comment_id})
         return models.Comment.from_record(comment_record)
 
     def insert_comment(self, comment_record):
@@ -55,5 +55,5 @@ class CommentDao(object):
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
 
     @property
-    def collection(self):
+    def comment_collection(self):
         return self.db.comments
