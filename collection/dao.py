@@ -26,6 +26,13 @@ class MongoDao(object):
         post = self.get_post(post_id)
         return [self.get_comment(comment_id) for comment_id in post.comments]
 
+    def get_colleges(self):
+        """
+
+        :return: List of colleges in the database
+        """
+        return self.db.posts.find({}).distinct('college')
+
     def insert_post(self, post_record):
     	"""
     	Inserts a post object into the database
