@@ -220,6 +220,7 @@ class MongoDBService(object):
         # We haven't crawled the subreddit at all.
         return False
 
+    # TODO(simplyfaisal): Move the two functions into the dao layer
     @staticmethod
     def serialize_post(submission, college_info):
         """

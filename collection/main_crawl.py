@@ -1,6 +1,7 @@
 import config
 from crawler import MultiThreadedCrawler
 
+
 def main():
     multi = MultiThreadedCrawler(config.SUBREDDITS)
     multi.start()
