@@ -1,15 +1,22 @@
 import models
 import pymongo
+import os
+import config
 from bson.objectid import ObjectId
 
 
 class MongoDao(object):
-
     def __init__(self, mongo_client=None):
-        self.db = mongo_client or pymongo.MongoClient()['reddit']
+        if mongo_client:
+            self.db = mongo_client
+        else:
+            if os.environ.get('PROD'):
+                self.db = pymongo.MongoClient()['reddit']
+            else:
+                self.db = pymongo.MongoClient(config.TEST_DB_URI)[config.TEST_DB_NAME]
 
     def get_post(self, post_id):
-    	"""
+        """
     	Returns a post object for the given id
     	
     	Inputs:
@@ -34,7 +41,7 @@ class MongoDao(object):
         return self.db.posts.find({}).distinct('college')
 
     def insert_post(self, post_record):
-    	"""
+        """
     	Inserts a post object into the database
 
     	Inputs:

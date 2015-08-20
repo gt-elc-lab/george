@@ -5,6 +5,8 @@ george.config(function($stateProvider, $urlRouterProvider) {
     $stateProvider
         .state('home', {
             url:'/home',
-            templateUrl: '../views/home.html'
+            templateUrl: '../views/home.html',
+            controller: 'HomeController',
+            controllerAs: 'home',
         })
 });

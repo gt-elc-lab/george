@@ -147,10 +147,9 @@ class MultiThreadedCrawler(object):
         Activate the threads
         """
         q = Queue()
-        mongodb_client = pymongo.MongoClient()['reddit']
         for i in range(8):
             logger.info('Spawned #{}'.format(i))
-            client = MongoDBService(mongodb_client)
+            client = MongoDBService()
             worker = RedditWorker(
                 RedditApiClient(), client,  q)
             worker.daemon = True
@@ -167,7 +166,7 @@ class MultiThreadedCrawler(object):
 
 class MongoDBService(object):
 
-    def __init__(self, mongo_client):
+    def __init__(self):
         self.dao = dao.MongoDao()
 
     def save(self, posts, college_info, get_comments):
