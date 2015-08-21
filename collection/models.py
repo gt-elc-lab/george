@@ -1,9 +1,10 @@
+import flask
 
 class Post(object):
 
     def __init__(self, **fields):
         self.__dict__.update(fields)
-        pass
+        return
     
     @staticmethod
     def from_record(mongo_record):
@@ -23,14 +24,16 @@ class Post(object):
     	"""
     	Returns a json representation of the object	
     	"""
-        pass
+        self.comments = map(str, self.comments)
+        self._id = str(self._id)
+        return flask.jsonify(self.__dict__)
 
 
 class Comment(object):
 
-    def __init__(self, fields):
-        self.__dict__.update(**fields)
-        pass
+    def __init__(self, **fields):
+        self.__dict__.update(fields)
+        return
 
     @staticmethod
     def from_record(mongo_record):
@@ -50,4 +53,5 @@ class Comment(object):
     	"""
     	Returns a json representation of the dictionary.
     	"""
-        pass
+        self._id = str(self._id)
+        return flask.jsonify(self.__dict__)

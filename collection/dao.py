@@ -24,7 +24,7 @@ class MongoDao(object):
     	
     	Returns a model.Post object
     	"""
-        if type(post_id) == str:
+        if type(post_id) == unicode:
             post_id = ObjectId(post_id)
         post_record = self.db.posts.find_one({'_id': post_id})
         return models.Post.from_record(post_record)
@@ -58,7 +58,7 @@ class MongoDao(object):
         return self.db.posts
 
     def get_comment(self, comment_id):
-        if type(comment_id) == str:
+        if type(comment_id) == unicode:
             comment_id = ObjectId(comment_id)
         comment_record = self.db.comments.find_one({'_id': comment_id})
         return models.Comment.from_record(comment_record)
