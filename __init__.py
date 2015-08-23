@@ -1,10 +1,10 @@
+import os
 from flask import Flask
+from server import application
 
-application = Flask(__name__)
-@application.route('/')
-def index():
-    return 'Coming soon..'
-
+def main():
+	application.debug = True
+	application.run()
+	
 if __name__ == '__main__':
-    application.debug = True
-    application.run()
+	main()
