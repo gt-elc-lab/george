@@ -28,10 +28,13 @@ class RedditApiClient(object):
         """
         Gets posts between the start and end time for a given subreddit.
 
-        Input:
-            subreddit <string> : subreddit to crawl
-            start <datetime> : start time
-            end <datetime> : datetime object
+        Args:
+            subreddit (str) : subreddit to crawl
+            start (datetime.datetime) : start time
+            end (datetime.datetime) : end time
+
+        Returns:
+            A list of praw.post objects
         """
         start_seconds = self.to_seconds(start)
         end_seconds = self.to_seconds(end)
@@ -47,8 +50,11 @@ class RedditApiClient(object):
         """
         Retrieve the comments of a post
 
-        Input:
-            post <praw.post> : a praw post object
+        Args:
+            post (praw.post) : the post to get the comments for
+
+        Returns:
+            a list of praw.comment objects
         """
         post.replace_more_comments(limit=None, threshold=0)
         return praw.helpers.flatten_tree(post.comments)
@@ -57,8 +63,12 @@ class RedditApiClient(object):
         """
         Generate random alphabetical string for the instances name.
 
-        Input:
-            length <int> : length of the generated string
+        Args:
+            length (int) : length of the generated string
+        
+        Returns:
+            a random string
+
         """
         return ''.join(random.choice(string.ascii_letters) 
             for i in range(length))
@@ -67,8 +77,11 @@ class RedditApiClient(object):
         """
         Convert a datetime object to seconds.
 
-        Input:
-            dt <datetime>:
+        Args:
+            dt (datetime.datetime):
+
+        Returns:
+            an int of the datetime seconds
         """
         return int(dt.strftime('%s'))
    
@@ -77,15 +90,15 @@ class RedditWorker(threading.Thread):
     """ self contained thread object """
 
     def __init__(self, reddit_client, database_client, q, 
-            interval=timedelta(days=7)):
+            interval=timedelta(days=14)):
         """
-        Input:
-            reddit_client <praw.reddit> : praw.reddit object used for
+        Args:
+            reddit_client (praw.reddit) : praw.reddit object used for
                 communicating with reddit api
             database_client: custom class that has a save method
-            q <Queue> : queue containing college infos
-            interval <timedelta> amount to shift the window every time a query
-                is created
+            q (Queue>) : queue containing college infos
+            interval (timedelta): amount to shift the window every time a query
+                is created, defaults to two weeks
         """
         threading.Thread.__init__(self)
         self.reddit_client = reddit_client
@@ -118,6 +131,14 @@ class RedditWorker(threading.Thread):
             self.q.task_done()
 
     def crawl(self, college_info, start, end):
+        """
+        Retrieve all the activity on a subreddit between the start and end dates.
+
+        Args:
+            college_info (dict): a dictionary with 'subreddit' and 'name' keys
+            start (datetime.datetime):
+            end (datetime.datetime):
+        """
         subreddit = college_info['subreddit']
         upper = start
         lower = upper - self.interval
@@ -130,6 +151,16 @@ class RedditWorker(threading.Thread):
                 lower = end
     
     def get_start_time(self, college_info):
+        """
+        Get the time of the most recent post in the database from the specified
+        college.
+
+        Args:
+            college_info (dict): a dictionary with 'subreddit' and 'name' keys
+
+        Returns:
+            a datetime object
+        """
         return self.database_client.last_post_date(college_info)
 
 
@@ -138,7 +169,7 @@ class MultiThreadedCrawler(object):
     def __init__(self, colleges):
         """
         Input:
-            colleges[] <dict>: array of {'name', 'subreddit'}
+            colleges (list<dict>): list of {'name': "?", 'subreddit':"?"} dicts
         """
         self.colleges = colleges
 
@@ -147,7 +178,7 @@ class MultiThreadedCrawler(object):
         Activate the threads
         """
         q = Queue()
-        for i in range(8):
+        for i in range(16):
             logger.info('Spawned #{}'.format(i))
             client = MongoDBService()
             worker = RedditWorker(
@@ -170,6 +201,15 @@ class MongoDBService(object):
         self.dao = dao.MongoDao()
 
     def save(self, posts, college_info, get_comments):
+        """
+        Save the posts to the database.
+
+        Args:
+            posts (list<praw.comments>):
+            college_info (dict): a dictionary with 'subreddit' and 'name' keys
+            get_comments (function): function used to retrieve comments for a
+                given post.
+        """
         post_count = 0
         comment_count = 0
         for post in posts:
@@ -192,6 +232,16 @@ class MongoDBService(object):
         return
 
     def insert_comments(self, comments):
+        """
+        Save the comments in the database.
+
+        Args:
+            comments (list<praw.comment>):
+
+        Returns:
+            a list of the ids that mongodb assigns to the comments. Used to 
+            create a reference to the comments within the posts
+        """
         inserted = []
         for comment in comments:
             _id = self.dao.insert_comment(comment)
@@ -202,8 +252,8 @@ class MongoDBService(object):
         """
         Returns the date of the last post crawled for the request school
 
-        Input:
-            college_info <dict>: { 'name': name of the college, 
+        Args:
+            college_info (dict): { 'name': name of the college, 
                 'subreddit': name of the subreddit}
 
         Returns: A datetime object
@@ -223,10 +273,12 @@ class MongoDBService(object):
         """
         Convert a praw post object to a dictionary.
 
-        Input:
-            submission <praw.post>: praw post object
-            college <string> : college name
-            subreddit <submission> : subreddit
+        Args:
+            submission (praw.post): praw post object
+            college_info (dict) :
+
+        Returns:
+            a dictionary
         """
         college = college_info['name']
         subreddit = college_info['subreddit']
@@ -247,10 +299,10 @@ class MongoDBService(object):
     def serialize_comment(comment, college_info):
         """
         Convert a praw  comment object to a dictionary
-        Input:
-            submission <praw.comment> : praw comment object
-            college <string> : college name
-            subreddit <string> : subreddit name
+        
+        Args:
+            submission (praw.comment) : praw comment object
+            college_info (str) : college name
         """
         college = college_info['name']
         subreddit = college_info['subreddit']

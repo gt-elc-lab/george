@@ -5,12 +5,14 @@ class SentimentHelper(object):
     def __init__(self):
         return
 
-    def compute_sentiment(self, text):
+    @staticmethod
+    def compute_sentiment(text):
         """
-            Input:
-                text <string> : text on which sentiment analysis will be computed
+        Get sentiment analysis scores for the given text.
+        Args:
+            text (str) : text on which sentiment analysis will be computed
 
-            Returns:
-                dictionary of sentiment score of sentence given from vader
+        Returns:
+            dictionary of sentiment scores 
         """
         return vaderSentiment.sentiment(text)

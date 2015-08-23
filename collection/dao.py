@@ -6,6 +6,7 @@ from bson.objectid import ObjectId
 
 
 class MongoDao(object):
+
     def __init__(self, mongo_client=None):
         if mongo_client:
             self.db = mongo_client
@@ -16,20 +17,14 @@ class MongoDao(object):
                 self.db = pymongo.MongoClient(config.TEST_DB_URI)[config.TEST_DB_NAME]
 
     def get_post(self, post_id):
-        """
-    	Returns a post object for the given id
-    	
-    	Inputs:
-    	    post_id: a string post id
-    	
-    	Returns a model.Post object
-    	"""
         if type(post_id) == unicode:
             post_id = ObjectId(post_id)
         post_record = self.db.posts.find_one({'_id': post_id})
         return models.Post.from_record(post_record)
 
     def get_post_comments(self, post_id):
+        """
+        """
         post = self.get_post(post_id)
         return [self.get_comment(comment_id) for comment_id in post.comments]
 
