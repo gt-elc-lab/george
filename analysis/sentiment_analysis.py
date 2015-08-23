@@ -1,4 +1,4 @@
-import vaderSentiment
+from vaderSentiment import vaderSentiment
 
 class SentimentHelper(object):
 
