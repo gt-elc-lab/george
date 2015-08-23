@@ -9,10 +9,13 @@ class Post(object):
     @staticmethod
     def from_record(mongo_record):
     	"""
-    	Returns a new instance of a post object from a dictionary
+    	Get a new instance of a post object from a dictionary
     	
-    	Input:
-    	    mongo_record: a dictionary
+    	Args:
+    	    mongo_record (dict): a dictionary
+
+        Returns
+            models.Post object
     	"""
         return Post(**mongo_record)
 
@@ -22,7 +25,8 @@ class Post(object):
 
     def to_json(self):
     	"""
-    	Returns a json representation of the object	
+    	Returns: 
+            a json representation of the object	
     	"""
         self.comments = map(str, self.comments)
         self._id = str(self._id)
@@ -38,10 +42,13 @@ class Comment(object):
     @staticmethod
     def from_record(mongo_record):
     	"""
-    	Returns a post object from the dictionary
+    	Get a post object from the dictionary
 
-    	Input:
+    	Args:
     	    mongo_record: a dictionary
+
+        Returns:
+            models.Comment instance
     	"""
         return Comment(**mongo_record)
 
