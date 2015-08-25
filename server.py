@@ -1,29 +1,33 @@
 import os
-from flask import Flask, render_template
+import json
+import flask
 from collection.dao import MongoDao
 
-dao = MongoDao()
-if not os.environ.get('PROD'):
-	application = Flask(__name__, static_url_path='')
+if os.environ.get('PROD'):
+    application = flask.Flask(__name__)
 else:
-	application = Flask(__name__)
-	
+    application = flask.Flask(__name__, static_url_path='')
+
+dao = MongoDao()
+
 @application.route('/')
 def index():
-    return render_template('index.html')
+    return flask.render_template('index.html')
 
-@application.route('/schools')
-def show_colleges():
-	return dao.get_colleges(self).to_json()
+@application.route('/colleges')
+def send_colleges():
+    return dao.get_colleges()
 
-@application.route('/post/<post_id>')	
-def show_post(post_id):
-	return dao.get_post(self, post_id).to_json()
-	
+@application.route('/post/<post_id>')
+def send_post(post_id):
+    return dao.get_post(str(post_id)).to_json()
+
 @application.route('/comment/<comment_id>')
-def show_comment(comment_id):
-	return dao.get_comment(self, comment_id).to_json()
-	
+def send_comment(comment_id):
+    return dao.get_comment(str(comment_id)).to_json()
+
 @application.route('/comments/<post_id>')
-def show_comments(post_id):
-	return dao.get_post_comments(self, post_id).to_json()
+def send_comments(post_id):
+	comments = [comment_model.to_json()
+				for comment_model in dao.get_post_comments(str(post_id))]
+	return json.dumps(comments)

@@ -1,4 +1,5 @@
-from vaderSentiment import vaderSentiment
+import re
+from vaderSentiment.vaderSentiment import sentiment as vader
 
 class SentimentHelper(object):
 
@@ -15,4 +16,4 @@ class SentimentHelper(object):
         Returns:
             dictionary of sentiment scores 
         """
-        return vaderSentiment.sentiment(text)
+        return vader(re.sub(r'\W+', '', text))

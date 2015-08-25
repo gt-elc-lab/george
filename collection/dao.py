@@ -1,11 +1,15 @@
-import models
 import pymongo
 import os
-import config
+import json
+
+from collection import models
+from collection import config
 from bson.objectid import ObjectId
 
 
 class MongoDao(object):
+    """ Object to get data from MongoDB"""
+
 
     def __init__(self, mongo_client=None):
         if mongo_client:
@@ -14,15 +18,14 @@ class MongoDao(object):
             if os.environ.get('PROD'):
                 self.db = pymongo.MongoClient()['reddit']
             else:
-     
                 self.db = pymongo.MongoClient(config.TEST_DB_URI)[config.TEST_DB_NAME]
+
     @property
     def post_collection(self):
         """
         The collection where the posts are stored.
         """
         return self.db.posts
-
 
     @property
     def comment_collection(self):
@@ -41,11 +44,10 @@ class MongoDao(object):
         Returns
             models.Post object
         """
-        if type(post_id) == unicode:
+        if isinstance(post_id, str):
             post_id = ObjectId(post_id)
         post_record = self.db.posts.find_one({'_id': post_id})
         return models.Post.from_record(post_record)
-
 
     def get_post_comments(self, post_id):
         """
@@ -60,12 +62,11 @@ class MongoDao(object):
         post = self.get_post(post_id)
         return [self.get_comment(comment_id) for comment_id in post.comments]
 
-
     def get_colleges(self):
         """
         Returns: A list of all the colleges present in the database.
         """
-        return self.db.posts.find({}).distinct('college')
+        return json.dumps(self.db.posts.find({}).distinct('college'))
 
 
     def insert_post(self, post_record):
@@ -74,8 +75,8 @@ class MongoDao(object):
 
     	Args:
     	    post_record (dict):
-    	
-    	Returns: 
+
+    	Returns:
             an ObjectId for the post
     	"""
         return self.db.posts.find_one_and_replace(
@@ -92,11 +93,10 @@ class MongoDao(object):
         Returns:
             a models.Comment
         """
-        if type(comment_id) == unicode:
+        if isinstance(comment_id, str):
             comment_id = ObjectId(comment_id)
         comment_record = self.db.comments.find_one({'_id': comment_id})
         return models.Comment.from_record(comment_record)
-
 
     def insert_comment(self, comment_record):
         """
@@ -111,3 +111,21 @@ class MongoDao(object):
         return self.db.comments.find_one_and_replace(
             {'reddit_id': comment_record['reddit_id']}, comment_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
+
+    def get_posts_within_daterange(self, start, end):
+        """
+        Get posts that fall within the given date range
+
+        Args:
+            start (datetime.datetime):
+            end (datetime.datetime):
+
+        Returns:
+            a list of models.Post objects with their comments already populated
+        """
+        post_records = self.db.posts.find(
+            {'created_utc': {'$lte': start, '$gte': end}})
+        for post_record in post_records:
+            post_record['comments'] = [self.get_comment(comment)
+                for comment in post_record.pop('comments')]
+        return [models.Post.from_record(record) for record in post_records]

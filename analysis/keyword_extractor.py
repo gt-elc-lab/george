@@ -6,9 +6,17 @@ import pymongo
 from nltk.stem.porter import PorterStemmer
 from sklearn import feature_extraction
 
+class KeyWordExtractor(object):
+
+    def __init__(self, analyser=None):
+        self.analyser = analyser or TFIDFHelper(get_text=lambda x: x.text)
+
+    def get_scores(self, documents):
+        return self.analyser.perform_tfidf(documents)
+
 class TFIDFHelper(object):
 
-    def __init__(self, stopwords=nltk.corpus.stopwords.words('english'), 
+    def __init__(self, stopwords=nltk.corpus.stopwords.words('english'),
                 get_text=lambda x: x):
         """
         Input:
@@ -28,32 +36,32 @@ class TFIDFHelper(object):
     def _count_vectorize(self, documents):
         """
 
-        Input:
-            documents list<str>: list of documents
+        Args:
+            documents list(str): list of documents
 
         Returns:
 
         """
         return self.cv.fit_transform(documents)
-      
+
 
     def _fit_transform(self, vectors):
         """
 
-        Input:
+        Args:
             vectors:
 
         Returns:
 
         """
         return self.tfidf_transformer.fit_transform(vectors)
-        
+
 
     def perform_tfidf(self, documents):
         """
 
-        Input: 
-            documents list<T> : list of documents
+        Args:
+            documents list(T) : list of documents
 
         Returns:
 
@@ -66,21 +74,18 @@ class TFIDFHelper(object):
 
     def compute_scores(self, documents, threshold=0.25):
         """
-        Input:
-            documents list<T> : list of documents
-            threshold <int> : value to filter out relevant terms
-            post_process <function> : function to perform once the relevant
-                terms have been identified. Expects (document, terms)
-        Returns: [[(term, score).....] for each document]
+        Args:
+            documents list(T) : list of documents
+        Returns:
+            [[(term, score).....] for each document]
         """
         tfidf_vectors = self.perform_tfidf(documents)
         document_terms = []
         for i, document in enumerate(tfidf_vectors):
             terms = []
             for j, score in enumerate(document):
-                if score > threshold:
-                    term = self.vocabulary_keys[self.vocabulary_values.index(j)]
-                    terms.append((term, score))
+                term = self.vocabulary_keys[self.vocabulary_values.index(j)]
+                terms.append((term, score))
             document_terms.append(terms)
         return document_terms
-            
+
