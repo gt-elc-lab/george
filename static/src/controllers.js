@@ -1,8 +1,8 @@
+'use strict'
 var george = angular.module('george');
 
 george.controller('HomeController', HomeController);
 
-HomeController.$inject = ['FlaskService'];
-function HomeController(FlaskService) {
-
+function HomeController(data) {
+    this.colleges = data.colleges;
 }

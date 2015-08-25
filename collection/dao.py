@@ -66,7 +66,9 @@ class MongoDao(object):
         """
         Returns: A list of all the colleges present in the database.
         """
-        return self.db.posts.find({}).distinct('college')
+        colleges = self.db.posts.find({}).distinct('college')
+        colleges.sort()
+        return colleges
 
 
     def insert_post(self, post_record):
