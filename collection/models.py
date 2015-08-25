@@ -37,7 +37,7 @@ class Post(object):
     	"""
         self.comments = map(str, self.comments)
         self._id = str(self._id)
-        return flask.jsonify(self.__dict__)
+        return self.__dict__
 
 
 class Comment(object):
@@ -62,7 +62,7 @@ class Comment(object):
     def to_record(self):
         """
         Returns:
-            a dicitonary representation of the object.
+            a dictonary representation of the object.
         """
         return self.__dict__
 

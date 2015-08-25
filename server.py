@@ -16,18 +16,18 @@ def index():
 
 @application.route('/colleges')
 def send_colleges():
-    return dao.get_colleges()
+    return flask.jsonify({'colleges': dao.get_colleges()})
 
 @application.route('/post/<post_id>')
 def send_post(post_id):
-    return dao.get_post(str(post_id)).to_json()
+    return flask.jsonify(dao.get_post(str(post_id)).to_json())
 
 @application.route('/comment/<comment_id>')
 def send_comment(comment_id):
-    return dao.get_comment(str(comment_id)).to_json()
+    return flask.jsonify(dao.get_comment(str(comment_id)).to_json())
 
 @application.route('/comments/<post_id>')
 def send_comments(post_id):
 	comments = [comment_model.to_json()
 				for comment_model in dao.get_post_comments(str(post_id))]
-	return json.dumps(comments)
+	return flask.jsonify({'comments': comments})

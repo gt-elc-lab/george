@@ -66,7 +66,7 @@ class MongoDao(object):
         """
         Returns: A list of all the colleges present in the database.
         """
-        return json.dumps(self.db.posts.find({}).distinct('college'))
+        return self.db.posts.find({}).distinct('college')
 
 
     def insert_post(self, post_record):
@@ -111,21 +111,3 @@ class MongoDao(object):
         return self.db.comments.find_one_and_replace(
             {'reddit_id': comment_record['reddit_id']}, comment_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
-
-    def get_posts_within_daterange(self, start, end):
-        """
-        Get posts that fall within the given date range
-
-        Args:
-            start (datetime.datetime):
-            end (datetime.datetime):
-
-        Returns:
-            a list of models.Post objects with their comments already populated
-        """
-        post_records = self.db.posts.find(
-            {'created_utc': {'$lte': start, '$gte': end}})
-        for post_record in post_records:
-            post_record['comments'] = [self.get_comment(comment)
-                for comment in post_record.pop('comments')]
-        return [models.Post.from_record(record) for record in post_records]
