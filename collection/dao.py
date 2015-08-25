@@ -49,6 +49,19 @@ class MongoDao(object):
         post_record = self.db.posts.find_one({'_id': post_id})
         return models.Post.from_record(post_record)
 
+    def get_latest_posts(self, college='Georgia Tech'):
+        """
+        Get the latest posts from the given college.
+
+        Args:
+            college (str):
+
+        Returns
+            list<models.Post>
+        """
+        post_records = self.db.posts.find({'college': college}).limit(30)
+        return [models.Post.from_record(record) for record in post_records]
+
     def get_post_comments(self, post_id):
         """
         Get comments for a given post.

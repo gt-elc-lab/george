@@ -8,11 +8,28 @@ from sklearn import feature_extraction
 
 class KeyWordExtractor(object):
 
-    def __init__(self, analyser=None):
-        self.analyser = analyser or TFIDFHelper(get_text=lambda x: x.text)
+    def __init__(self, documents, analyser=None, text_accessor=lambda x: x):
+        """
+        Args:
+            documents (list<T>):
+            analyser (analysis.TFIDFHelper):
+            text_accessor (function): function to get text from document object
+        """
+        self.analyser = analyser or TFIDFHelper(get_text=text_accessor)
+        self.vectors = self.analyser.compute_scores(documents)
 
-    def get_scores(self, documents):
-        return self.analyser.perform_tfidf(documents)
+    def get_keywords(self, document_index, threshold=0.20):
+        """
+        Args:
+            document_index (int): the index of the document. Used to find the
+                vector for the words to filter
+            threshold (float): TFIDF score to filter by
+
+        Returns:
+            a set of keywords
+        """
+        return set([term for term, weight in self.vectors[document_index]
+            if weight >= threshold])
 
 class TFIDFHelper(object):
 
@@ -26,7 +43,7 @@ class TFIDFHelper(object):
         """
         self.stopwords = set(stopwords)
         self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
-        self.cv = feature_extraction.text.CountVectorizer(
+        self.count_vectorizer = feature_extraction.text.CountVectorizer(
             stop_words=stopwords, ngram_range=(1,1))
         self.get_text = get_text
         self.vocabulary_keys = None
@@ -42,7 +59,7 @@ class TFIDFHelper(object):
         Returns:
 
         """
-        return self.cv.fit_transform(documents)
+        return self.count_vectorizer.fit_transform(documents)
 
 
     def _fit_transform(self, vectors):
@@ -68,11 +85,11 @@ class TFIDFHelper(object):
         """
         word_counts = self._count_vectorize(
             [self.get_text(document) for document in documents])
-        self.vocabulary_keys = self.cv.vocabulary_.keys()
-        self.vocabulary_values = self.cv.vocabulary_.values()
+        self.vocabulary_keys = self.count_vectorizer.vocabulary_.keys()
+        self.vocabulary_values = self.count_vectorizer.vocabulary_.values()
         return self._fit_transform(word_counts).toarray()
 
-    def compute_scores(self, documents, threshold=0.25):
+    def compute_scores(self, documents):
         """
         Args:
             documents list(T) : list of documents
@@ -81,7 +98,7 @@ class TFIDFHelper(object):
         """
         tfidf_vectors = self.perform_tfidf(documents)
         document_terms = []
-        for i, document in enumerate(tfidf_vectors):
+        for document in tfidf_vectors:
             terms = []
             for j, score in enumerate(document):
                 term = self.vocabulary_keys[self.vocabulary_values.index(j)]
