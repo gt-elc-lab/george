@@ -8,7 +8,7 @@ from sklearn import feature_extraction
 
 class KeyWordExtractor(object):
 
-    def __init__(self, documents, analyser=None, text_accessor=lambda x: x):
+    def __init__(self, documents, analyser=None, text_accessor=lambda x: x.text):
         """
         Args:
             documents (list<T>):
