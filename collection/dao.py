@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from datetime import timedelta
 
-from collection import models
-from collection import config
+import models
+import config
 from bson.objectid import ObjectId
 
 
@@ -138,10 +138,41 @@ class MongoDao(object):
     def comment_exist(self, keys):
         return self.key_exists(self.db.comments)
 
-    def get_term_frequency(self):
-        pass
+    def get_term_frequency(self, term, colleges, start=None, end=None):
+        if not start and not end:
+            end = datetime.now()
+            start = end - timedelta(days=30)
+        return [self.term_frequency_query(self.db.comments, term, college, start, end) for college in colleges]
 
-    def term_frequency_query(self):
-        pass
+    def term_frequency_query(self, collection, term, college, lower, upper):
+        match = {'$match':
+                     {'college': college,
+                      'created_utc': {'$gte': lower, '$lte': upper},
+                      '$text': {'$search': term}}}
+        project = {'$project': {
+                'y': {'$year': '$created_utc'},
+                'm': {'$month': '$created_utc'},
+                'd': {'$dayOfMonth': '$created_utc'}
+        }}
+        group = {'$group': {
+         '_id': {
+             'year': '$y',
+             'month': '$m',
+             'day': '$d'
+         },
+        'total': {'$sum': 1}
+         }}
+        sort = {'$sort':{
+             '_id.year': -1,
+             '_id.month': -1,
+             '_id.day' : -1
+             }}
+        pipeline = [match, project, group, sort]
+        return collection.aggregate(pipeline)
 
-
+if __name__ == '__main__':
+    md = MongoDao()
+    result = md.get_term_frequency('oscar', ['Georgia Tech'])
+    for cursor in result:
+        for doc in cursor:
+            print doc
