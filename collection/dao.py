@@ -1,6 +1,7 @@
 import pymongo
 import os
-import json
+from datetime import datetime
+from datetime import timedelta
 
 from collection import models
 from collection import config
@@ -126,3 +127,21 @@ class MongoDao(object):
         return self.db.comments.find_one_and_replace(
             {'reddit_id': comment_record['reddit_id']}, comment_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
+
+    def key_exists(self, collection, keys):
+        matchers = {k: {'$exists': True} for k in keys}
+        return collection.find(matchers)
+
+    def post_exist(self, keys):
+        return self.key_exists(self.db.posts, keys)
+
+    def comment_exist(self, keys):
+        return self.key_exists(self.db.comments)
+
+    def get_term_frequency(self):
+        pass
+
+    def term_frequency_query(self):
+        pass
+
+
