@@ -129,27 +129,72 @@ class MongoDao(object):
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
 
     def key_exists(self, collection, keys):
+        """
+        Get the documents that contain all of the specified keys.
+
+        Args:
+            collection: the collection to operate on. In this case it will be
+                posts or comments.
+            keys list(str):
+
+        Returns:
+            a cursor for the documents returned by the query
+        """
         matchers = {k: {'$exists': True} for k in keys}
         return collection.find(matchers)
 
     def post_exist(self, keys):
+        """
+        Gets posts that contain the specified keys.
+        """
         return self.key_exists(self.db.posts, keys)
 
     def comment_exist(self, keys):
+        """
+        Gets comments that contain the specified keys.
+        """
         return self.key_exists(self.db.comments)
 
     def get_term_frequency(self, term, colleges, start=None, end=None):
+        """
+        Get usage data for a term across the given colleges with the specified
+        date range.
+
+        Args:
+            term (str):
+            colleges (list<str>):
+            start (datetime): defaults to 30 days ago
+            end (datetime): defaults to today
+
+        Returns:
+            a cursor containing the results in a dictionary with the keys year,
+                month, day, college.
+        """
         if not start and not end:
             end = datetime.now()
             start = end - timedelta(days=30)
-        return [self.term_frequency_query(self.db.comments, term, college, start, end) for college in colleges]
+        return self.term_frequency_query(self.db.comments, term, colleges, start, end)
 
-    def term_frequency_query(self, collection, term, college, lower, upper):
+    def term_frequency_query(self, collection, term, colleges, lower, upper):
+        """
+        Perform the query to retrieve the counts for a term across the given
+        colleges within the specified range.
+
+        Args:
+            collection (): the collection to perform the query on
+            term (str): does not have to be a single term i.e 'time ticket'
+            lower (datetime):
+            upper (datetime):
+
+        Returns:
+            a pymongo.Cursor
+        """
         match = {'$match':
-                     {'college': college,
+                     {'college': {'$in': colleges},
                       'created_utc': {'$gte': lower, '$lte': upper},
                       '$text': {'$search': term}}}
         project = {'$project': {
+                'college': 1,
                 'y': {'$year': '$created_utc'},
                 'm': {'$month': '$created_utc'},
                 'd': {'$dayOfMonth': '$created_utc'}
@@ -158,9 +203,10 @@ class MongoDao(object):
          '_id': {
              'year': '$y',
              'month': '$m',
-             'day': '$d'
+             'day': '$d',
+             'college': '$college'
          },
-        'total': {'$sum': 1}
+        'total': {'$sum': 1},
          }}
         sort = {'$sort':{
              '_id.year': -1,
@@ -172,7 +218,6 @@ class MongoDao(object):
 
 if __name__ == '__main__':
     md = MongoDao()
-    result = md.get_term_frequency('oscar', ['Georgia Tech'])
-    for cursor in result:
-        for doc in cursor:
-            print doc
+    result = md.get_term_frequency('class', ['Georgia Tech', 'Purdue'])
+    for doc in result:
+        print doc
