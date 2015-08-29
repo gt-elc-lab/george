@@ -19,7 +19,7 @@ class ExtractionTask(Task):
 
     @staticmethod
     def execute():
-        return
+        pass
 
 class CrawlTask(Task):
     """ Task for scraping reddit """

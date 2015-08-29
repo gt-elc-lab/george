@@ -155,7 +155,7 @@ class MongoDao(object):
         """
         return self.key_exists(self.db.comments)
 
-    def get_term_frequency(self, term, colleges, start=None, end=None):
+    def get_term_frequency(self, collection, term, colleges, start=None, end=None):
         """
         Get usage data for a term across the given colleges with the specified
         date range.
@@ -173,7 +173,7 @@ class MongoDao(object):
         if not start and not end:
             end = datetime.now()
             start = end - timedelta(days=30)
-        return self.term_frequency_query(self.db.comments, term, colleges, start, end)
+        return self.term_frequency_query(collection, term, colleges, start, end)
 
     def term_frequency_query(self, collection, term, colleges, lower, upper):
         """
@@ -215,6 +215,14 @@ class MongoDao(object):
              }}
         pipeline = [match, project, group, sort]
         return collection.aggregate(pipeline)
+
+        def posts_term_frequency(self, term, colleges, start, end):
+            return self.get_term_frequency(
+                self.db.posts, term, colleges, start, end)
+
+        def comments_term_frequency(self, term, colleges, start, end):
+            return self.get_term_frequency(
+                self.db.comments, term, colleges, start, end)
 
 if __name__ == '__main__':
     md = MongoDao()
