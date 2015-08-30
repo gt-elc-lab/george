@@ -1,0 +1,14 @@
+<div>
+  <ul class="nav navbar-nav">
+        <li class="dropdown">
+          <a ui-sref="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="true">Colleges<span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li ng-repeat="college in colleges">
+              <label>
+                <input type="checkbox">{{college}}
+              </label>
+            </li>
+          </ul>
+        </li>
+</ul>
+</div>

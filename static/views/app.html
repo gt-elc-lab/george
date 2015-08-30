@@ -1,0 +1,32 @@
+<div class="no-gutter">
+    <!-- Sidebar  -->
+    <div class="col-md-12">
+        <div class="sidebar-container col-sm-1">
+            <div class="">
+                <a ui-sref="home">
+                    <h1 class="text-left text-warning">G</h1>
+                </a>
+            </div>
+            <div>
+                <a class="sidebar-button" href="">
+                    <button type="button" class="btn btn-default" aria-label="Left Align">
+                        <span class="glyphicon glyphicon-fire" aria-hidden="true"></span>
+                    </button>
+                </a>
+                <a class="sidebar-button" ui-sref="app.wordsearch">
+                    <button type="button" class="btn btn-default" aria-label="Left Align">
+                        <span class="glyphicon glyphicon-stats" aria-hidden="true"></span>
+                    </button>
+                </a>
+                <a class="sidebar-button" href="">
+                    <button type="button" class="btn btn-default" aria-label="Left Align">
+                        <span class="glyphicon glyphicon-tree-conifer" aria-hidden="true"></span>
+                    </button>
+                </a>
+            </div>
+
+        </div>
+        <!-- end side bar -->
+        <div class="col-md-11 buffer" ui-view></div>
+    </div>
+</div>

@@ -9,6 +9,7 @@ from pymongo.collection import ReturnDocument
 from datetime import datetime, timedelta
 from config import SUBREDDITS, CREDENTIALS
 from Queue import Queue
+from analysis import sentiment_analysis
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -199,6 +200,7 @@ class MongoDBService(object):
 
     def __init__(self):
         self.dao = dao.MongoDao()
+        self.sentiment = sentiment_analysis.SentimentHelper()
 
     def save(self, posts, college_info, get_comments):
         """
@@ -224,6 +226,7 @@ class MongoDBService(object):
             # Join the post to its comments by storing the object ids of the
             # comments
             post_record['comments'] = comment_ids
+            post_record.update(self.sentiment.compute_sentiment(post_record['text']))
             self.dao.insert_post(post_record)
             post_count += 1
             comment_count += len(comment_ids)
@@ -244,6 +247,7 @@ class MongoDBService(object):
         """
         inserted = []
         for comment in comments:
+            comment.update(self.sentiment.compute_sentiment(comment['text']))
             _id = self.dao.insert_comment(comment)
             inserted.append(_id)
         return inserted
