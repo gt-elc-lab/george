@@ -8,7 +8,9 @@ function DropdownMultiselect() {
             colleges: '='
         },
         restrict: 'AE',
-        templateUrl: '../templates/multiselect.html'
+        templateUrl: '../templates/multiselect.html',
+        replace: true
     }
 
+    return directive;
 }

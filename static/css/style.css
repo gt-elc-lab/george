@@ -16,3 +16,12 @@
     padding-right:0;
     padding-left:0;
 }
+
+.buffer {
+    margin: 0px 15px 0px 15px;
+}
+
+.navbar-nav > li > .dropdown-menu {
+    width: 250px;
+    padding: 3px;
+}
