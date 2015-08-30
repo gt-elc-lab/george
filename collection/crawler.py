@@ -144,12 +144,12 @@ class RedditWorker(threading.Thread):
         upper = start
         lower = upper - self.interval
         while upper > end:
+            if lower < end:
+                lower = end
             posts = self.reddit_client.get_posts(subreddit, upper, lower)
             self.database_client.save(posts, college_info, RedditApiClient.get_comments)
             upper = lower
             lower -= self.interval
-            if lower < end:
-                lower = end
     
     def get_start_time(self, college_info):
         """
