@@ -16,11 +16,23 @@ class Task(object):
 
 class ExtractionTask(Task):
     """ Extracts sentiment analysis scores and keywords """
-
+	
     @staticmethod
     def execute():
-        pass
-
+        instantiatedDao = MongoDao()
+		docsThatDontHaveKeyword = instatiatedDao.post_exist(["keywords", "sentiment"])
+		for post in docsThatDontHaveKeyword:
+			post.comments = map(instantiatedDao.get_comment, post.comments)
+			combinedList = [post]+post.comments
+			instantiatedKeywordExtractor = KeyWordExtractor(combinedList)
+			for index, document in enumerate(combinedList):
+				keywords = instantiatedKeywordExtractor.get_keywords(index)
+				document.keywords = keywords
+				if isinstance(document, models.Post):
+					dao.insert_post(document.to_record())
+				else: 
+					dao.insert_comment(document.to_record())
+					
 class CrawlTask(Task):
     """ Task for scraping reddit """
     @staticmethod
