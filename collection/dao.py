@@ -224,8 +224,57 @@ class MongoDao(object):
         return self.get_term_frequency(
             self.db.comments, term, colleges, start, end)
 
+
+class TermFreqFormat(object):
+
+    def __init__(self, mongo_client=None):
+        self.dao = MongoDao(mongo_client)
+
+    def format_posts_term_frequency(self, term, colleges, start=None, end=None):
+        raw = self.dao.posts_term_frequency(term, colleges, start, end)
+        if not start and not end:
+            end = datetime.now()
+            start = end - timedelta(days=30)
+        date_range = [day.strftime('%Y-%m-%d') for day in (start + timedelta(y) for y in range((end - start).days + 1))]
+
+        out = []
+        for dump in raw:
+            college = dump['_id']['college']
+            date = '{0}-{1}-{2}'.format(
+                dump['_id']['year'], dump['_id']['month'], dump['_id']['day'])
+            date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
+            count = dump['total']
+            out.append({'college' : college, 'data' : {'date' : date, 'count' : count}})
+
+        for college_a in colleges:
+            school_dates = [x for x in date_range if x not in set([d['data']['date'] for d in out if d['college'] == college_a])]
+            for school_date in school_dates:
+                out.append({'college' : college_a, 'data' : {'date' : school_date, 'count' : 0}})
+        return out
+    def format_comments_term_frequency(self, term, colleges, start=None, end=None):
+        raw = self.dao.terms_term_frequency(term, colleges, start, end)
+        if not start and not end:
+            end = datetime.now()
+            start = end - timedelta(days=30)
+        date_range = [day.strftime('%Y-%m-%d') for day in (start + timedelta(y) for y in range((end - start).days + 1))]
+
+        out = []
+        for dump in raw:
+            college = dump['_id']['college']
+            date = '{0}-{1}-{2}'.format(
+                dump['_id']['year'], dump['_id']['month'], dump['_id']['day'])
+            date = datetime.strptime(date, '%Y-%m-%d').strftime('%Y-%m-%d')
+            count = dump['total']
+            out.append({'college' : college, 'data' : {'date' : date, 'count' : count}})
+
+        for college_a in colleges:
+            school_dates = [x for x in date_range if x not in set([d['data']['date'] for d in out if d['college'] == college_a])]
+            for school_date in school_dates:
+                out.append({'college' : college_a, 'data' : {'date' : school_date, 'count' : 0}})
+        return out
+
 if __name__ == '__main__':
-    md = MongoDao()
-    result = md.posts_term_frequency('class', ['Georgia Tech', 'Purdue'])
+    t = TermFreqFormat()
+    result = t.format_posts_term_frequency('class', ['Georgia Tech', 'Purdue'])
     for doc in result:
         print doc
