@@ -9,7 +9,8 @@ function HomeController(data) {
     this.colleges = data.colleges;
 }
 
-function WordSearchController(data) {
+TrendingController.$inject = ['RestService'];
+function WordSearchController(RestService, data) {
     this.colleges = data.colleges;
 }
 

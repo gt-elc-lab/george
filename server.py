@@ -2,6 +2,7 @@ import os
 import json
 import flask
 from collection.dao import MongoDao
+import route_handlers
 
 if os.environ.get('PROD'):
     application = flask.Flask(__name__)
@@ -31,3 +32,13 @@ def send_comments(post_id):
 	comments = [comment_model.to_json()
 				for comment_model in dao.get_post_comments(str(post_id))]
 	return flask.jsonify({'comments': comments})
+
+@application.route('/wordsearch')
+def send_frequency_data():
+    term = flask.request.args.get('term')
+    colleges = flask.request.args.getlist('colleges')
+    start = flask.request.args.get('start')
+    end = flask.request.args.get('end')
+    handler = route_handlers.TermFreqHandler()
+    data = handler.execute(term, colleges, start, end)
+    return flask.jsonify({'data': data})
