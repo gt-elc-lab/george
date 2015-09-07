@@ -28,19 +28,14 @@ function WordSearchController($scope, RestService, data) {
 
     this.validate = function() {
         var selectedColleges = this.getSelectedColleges();
-        var term = this.getTerm();
         if (selectedColleges) {
             $scope.$broadcast('timeseries-graph',
-                {term: 'class', colleges: selectedColleges})
+                {term: this.term, colleges: selectedColleges})
         }
         else {
             alert('invalid input');
         }
     }
-
-    this.getTerm = function() {
-        return this.term;
-    };
 }
 
 TrendingController.$inject = ['RestService'];

@@ -38,3 +38,7 @@
   stroke: #777;
   shape-rendering: crispEdges;
 }
+
+.x.axis path {
+  display: none;
+}

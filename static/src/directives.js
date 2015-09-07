@@ -53,7 +53,7 @@ function TimeSeriesGraph() {
             .attr('height', HEIGHT)
             .append('g')
             .attr('transform',
-                'translate(' + MARGIN.left + ',' + MARGIN.right + ')');
+                'translate(' + MARGIN.left + ',' + 0+ ')');
 
         var xScale = d3.time.scale()
             .range([MARGIN.left, WIDTH - MARGIN.right]);
@@ -66,7 +66,8 @@ function TimeSeriesGraph() {
             })
             .y(function(d) {
                 return yScale(d.total);
-            });
+            })
+            .interpolate('monotone');
 
         $scope.$on('timeseries-graph', function(e, args) {
             $scope.colleges = args.colleges.map(function(college) {
@@ -79,23 +80,23 @@ function TimeSeriesGraph() {
             $scope.getData(args.term, args.colleges).success(function(response) {
                 var data = response.data;
 
-                var maxTotal = max(data.map(function(collegeData) {
-                    return max(collegeData.data.map(function(d) {return d.total}));
+                var maxTotal = d3.max(data.map(function(collegeData) {
+                    return d3.max(collegeData.data.map(function(d) {return d.total}));
                 }));
 
-                var minTotal = min(data.map(function(collegeData) {
-                    return min(collegeData.data.map(function(d) {return d.total}));
+                var minTotal = d3.min(data.map(function(collegeData) {
+                    return d3.min(collegeData.data.map(function(d) {return d.total}));
                 }));
                 yScale.domain([minTotal, maxTotal]);
 
-                var startDate = min(data.map(function(collegeData) {
-                    return min(collegeData.data.map(function(d) {
+                var startDate = d3.min(data.map(function(collegeData) {
+                    return d3.min(collegeData.data.map(function(d) {
                         return new Date(d.date);
                     }));
                 }));
 
-                var endDate = max(data.map(function(collegeData) {
-                    return max(collegeData.data.map(function(d) {
+                var endDate = d3.max(data.map(function(collegeData) {
+                    return d3.max(collegeData.data.map(function(d) {
                         return new Date(d.date);
                     }));
                 }));
@@ -105,10 +106,15 @@ function TimeSeriesGraph() {
                 var xAxis = d3.svg.axis().scale(xScale).orient('bottom')
                     .tickFormat(d3.time.format('%m / %d'));
 
+                svg.selectAll(".line").remove();
+                svg.selectAll("circle").remove();
+                svg.selectAll(".y.axis").transition().duration(1500).call(yAxis);
+                svg.selectAll(".x.axis").transition().duration(1500).call(xAxis);
+
                 svg.append('g')
                     .attr('class', 'x axis')
                     .attr('transform',
-                        'translate(' + 0 + ',' + (HEIGHT - MARGIN.bottom - MARGIN.top) + ')')
+                        'translate(' + 0 + ',' + (HEIGHT - MARGIN.bottom) + ')')
                     .call(xAxis);
 
                 svg.append('g')
@@ -117,19 +123,25 @@ function TimeSeriesGraph() {
                     .call(yAxis)
 
                 data.forEach(function(college) {
+                    var color = '#' + $scope.getColor(college.college);
                     svg.append("path")
                     .datum(college.data)
                     .attr("class", "line")
                     .attr('fill', 'none')
-                    .style('stroke', '#' + $scope.getColor(college.college))
+                    .style('stroke', color)
                     .style('stroke-width', '3px')
-                    .attr("d", line);
+                    .attr("d", line)
+                    .on('mouseover', function() {
+                        d3.select(this)
+                        .style('opacity', 1)
+                        .style('stroke-width, 6px');
+                    });
 
                     var points = svg.selectAll(".point")
                         .data(college.data)
                         .enter().append("svg:circle")
-                        .attr("stroke", "black")
-                        .attr("fill", '#' + $scope.getColor(college.college))
+                        .attr("stroke", "none")
+                        .attr("fill", color)
                         .attr("cx", function(d) {
                             return xScale(new Date(d.date))
                         })
@@ -146,14 +158,5 @@ function TimeSeriesGraph() {
         });
 
     }
-
-    function min(array) {
-        return Math.min.apply(null, array);
-    }
-
-    function max(array) {
-        return Math.max.apply(null, array);
-    }
-
     return directive;
 }
