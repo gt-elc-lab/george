@@ -1,10 +1,10 @@
 <div>
     <div class="row buffer">
         <span ng-repeat="college in colleges"
-              class="label margin-small"
-              ng-style="college.style">{{college.name}}</span>
+              class="btn btn-primary margin-small"
+              ng-style="{'background-color': college.color}">{{college.name}}</span>
     </div>
-    <div id="timeseries-graph" class="row">
+    <div id="timeseries-graph" class=" buffer row">
 
     </div>
 </div>

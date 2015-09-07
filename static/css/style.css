@@ -29,3 +29,12 @@
 .margin-small {
     margin: 5px;
 }
+
+.axis path,
+.axis line {
+    font-family: Lato;
+    font-size: 13px;
+  fill: none;
+  stroke: #777;
+  shape-rendering: crispEdges;
+}
