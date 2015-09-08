@@ -51,14 +51,15 @@ class TermFreqHandler(RouteHandler):
                 collision_buckets[data_point['date']].append(data_point)
             for date, values in collision_buckets.iteritems():
                 collision_buckets[date] = reduce(
-                    lambda x, y: {'total': x['total'] + y['total'], 'date': x['date']}, values)
+                    lambda x, y: {'total': x['total'] + y['total'], 'date': x['date'], 'college': x['college']}, values)
             # Fill in any days that don't appear with a count of 0. This prevents the visualization
             # from being misleading on the front end.
             normalized = []
-            while start <= end:
-                if start not in collision_buckets:
-                    normalized.append({'total': 0, 'date': start})
-                start += datetime.timedelta(days=1)
+            period_start = start
+            while period_start <= end:
+                if period_start not in collision_buckets:
+                    normalized.append({'total': 0, 'date': period_start})
+                period_start += datetime.timedelta(days=1)
             # Grab the actual values.
             normalized += [v for v in collision_buckets.itervalues()]
             normalized.sort(key=lambda x: x['date'])

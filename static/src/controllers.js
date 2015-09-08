@@ -28,7 +28,7 @@ function WordSearchController($scope, RestService, data) {
 
     this.validate = function() {
         var selectedColleges = this.getSelectedColleges();
-        if (selectedColleges) {
+        if (selectedColleges && this.term) {
             $scope.$broadcast('timeseries-graph',
                 {term: this.term, colleges: selectedColleges})
         }

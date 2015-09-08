@@ -131,11 +131,6 @@ function TimeSeriesGraph() {
                     .style('stroke', color)
                     .style('stroke-width', '3px')
                     .attr("d", line)
-                    .on('mouseover', function() {
-                        d3.select(this)
-                        .style('opacity', 1)
-                        .style('stroke-width, 6px');
-                    });
 
                     var points = svg.selectAll(".point")
                         .data(college.data)
