@@ -20,7 +20,7 @@ function RestService($http) {
     };
 
     service.getCommentsForPost = function(postId) {
-        return $http.get('/comments/' + postId);
+        return $http.get('/comments/' + postId, {cache: true});
     };
 
     service.getTermFrequencyData = function(term, colleges, opt_start, opt_end) {
