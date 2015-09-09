@@ -38,6 +38,13 @@ class ExtractionTask(Task):
                 except Exception as e:
                     print e
 
+class CreateGraphTask(Task):
+
+    @staticmethod
+    def execute():
+        kg = KeywordGraphHandler()
+        kg.execute()
+
 
 class CrawlTask(Task):
     """ Task for scraping reddit """
