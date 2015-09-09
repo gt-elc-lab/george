@@ -94,7 +94,11 @@ class KeywordGraphHandler(RouteHandler):
     def __init__(self, dao=None):
         self.dao = dao or MongoDao()
 
-    def execute(self, colleges=None):
+    def execute(self, colleges=None, start=None, end=None):
+        if not start or not end:
+            end = datetime.datetime.today()
+            end = datetime.datetime(end.year, end.month, end.day)
+            start = end - datetime.timedelta(days=1)
         if colleges == None:
             colleges = self.dao.get_colleges()
         recent_posts = []
