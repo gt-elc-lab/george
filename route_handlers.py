@@ -109,7 +109,7 @@ class KeywordGraphHandler(RouteHandler):
         recent_posts = [post for post in recent_posts if 'keywords' in post]
         index = 0
         for current in recent_posts:
-            graph['nodes'].append({'id':current['_id']})
+            graph['nodes'].append({'id':str(current['_id'])})
             for post in [related for related in recent_posts if related['_id'] != current['_id'] and len(set(related['keywords']) & set(current['keywords'])) != 0]:
                 graph['edges'].append({'source':index, 'target':recent_posts.index(post)})
             index += 1
