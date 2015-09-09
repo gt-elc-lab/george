@@ -1,5 +1,7 @@
 var george = angular.module('george');
+
 george.service('RestService', RestService);
+george.service('ColorHashService', ColorHashService);
 
 RestService.$inject = ['$http'];
 function RestService($http) {
@@ -18,7 +20,7 @@ function RestService($http) {
     };
 
     service.getCommentsForPost = function(postId) {
-        return $http.get('/comments/' + postId);
+        return $http.get('/comments/' + postId, {cache: true});
     };
 
     service.getTermFrequencyData = function(term, colleges, opt_start, opt_end) {
@@ -32,6 +34,32 @@ function RestService($http) {
         }
         return $http.get('/wordsearch', { params: params });
     };
+
+    return service;
+}
+
+function ColorHashService() {
+    var service = {};
+
+    service.colorFromString = function(string) {
+        return rgbFromInt(hash(string));
+    };
+
+    function hash(string) {
+        var hash = 0;
+        string.split('').forEach(function(ch, i) {
+            hash = ch.charCodeAt(0) + ((hash << 5) - hash);
+        });
+        return hash;
+    }
+
+    function rgbFromInt(n) {
+        var c = (n & 0x00FFFFFF)
+        .toString(16)
+        .toUpperCase();
+
+        return "00000".substring(0, 6 - c.length) + c;
+    }
 
     return service;
 }

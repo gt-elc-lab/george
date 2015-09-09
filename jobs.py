@@ -19,7 +19,25 @@ class ExtractionTask(Task):
 
     @staticmethod
     def execute():
-        pass
+        mongo_dao = MongoDao()
+        unanalysed_documents = mongo_dao.post_keys_exist(["keywords"])
+        for post in unanalysed_documents:
+            comments = map(mongo_dao.get_comment, post.comments)
+            corpus = [post] + comments
+            corpus = filter(lambda x: x.text, corpus)
+            if corpus:
+                try:
+                    keyword_extractor = KeyWordExtractor(corpus)
+                    for index, document in enumerate(corpus):
+                        keywords = list(keyword_extractor.get_keywords(index))
+                        document.keywords = keywords
+                        if isinstance(document, models.Post):
+                            mongo_dao.insert_post(document.to_record())
+                        else:
+                            mongo_dao.insert_comment(document.to_record())
+                except Exception as e:
+                    print e
+
 
 class CrawlTask(Task):
     """ Task for scraping reddit """

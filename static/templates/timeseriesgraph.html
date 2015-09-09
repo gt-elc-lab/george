@@ -1,0 +1,19 @@
+<div>
+    <div class="row buffer">
+        <span ng-repeat="college in colleges"
+              class="btn btn-primary margin-small"
+              ng-style="{'background-color': college.color}">{{college.name}}</span>
+    </div>
+    <div ng-show="loading">
+        <div class="row">
+            <div class="col-xs-6 col-md-3 col-md-offset-3">
+                <a href="#" class="">
+                    <img src="../images/loadingicon.gif">
+                </a>
+            </div>
+        </div>
+    </div>
+    <div ng-show="!loading" id="timeseries-graph" class=" buffer row">
+
+    </div>
+</div>

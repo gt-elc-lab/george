@@ -87,14 +87,14 @@ class MongoDao(object):
 
     def insert_post(self, post_record):
         """
-    	Inserts a post object into the database
+        Inserts a post object into the database
 
-    	Args:
-    	    post_record (dict):
+        Args:
+            post_record (dict):
 
-    	Returns:
+        Returns:
             an ObjectId for the post
-    	"""
+        """
         return self.db.posts.find_one_and_replace(
             {'reddit_id': post_record['reddit_id']}, post_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
@@ -140,22 +140,22 @@ class MongoDao(object):
         Returns:
             a cursor for the documents returned by the query
         """
-        matchers = {k: {'$exists': True} for k in keys}
+        matchers = {k: {'$exists': False} for k in keys}
         return collection.find(matchers)
 
-    def post_exist(self, keys):
+    def post_keys_exist(self, keys):
         """
         Gets posts that contain the specified keys.
         """
-        return self.key_exists(self.db.posts, keys)
+        return map(models.Post.from_record, self.key_exists(self.db.posts, keys))
 
-    def comment_exist(self, keys):
+    def comment_keys_exist(self, keys):
         """
         Gets comments that contain the specified keys.
         """
-        return self.key_exists(self.db.comments)
+        return map(models.Comment.from_record, self.key_exists(self.db.comments))
 
-    def get_term_frequency(self, collection, term, colleges, start=None, end=None):
+    def get_term_frequency(self, collection, term, colleges, start, end):
         """
         Get usage data for a term across the given colleges with the specified
         date range.
@@ -170,9 +170,6 @@ class MongoDao(object):
             a cursor containing the results in a dictionary with the keys year,
                 month, day, college.
         """
-        if not start and not end:
-            end = datetime.now()
-            start = end - timedelta(days=30)
         return self.term_frequency_query(collection, term, colleges, start, end)
 
     def term_frequency_query(self, collection, term, colleges, lower, upper):
@@ -216,16 +213,10 @@ class MongoDao(object):
         pipeline = [match, project, group, sort]
         return collection.aggregate(pipeline)
 
-        def posts_term_frequency(self, term, colleges, start, end):
-            return self.get_term_frequency(
-                self.db.posts, term, colleges, start, end)
+    def posts_term_frequency(self, term, colleges, start, end):
+        return self.get_term_frequency(
+            self.db.posts, term, colleges, start, end)
 
-        def comments_term_frequency(self, term, colleges, start, end):
-            return self.get_term_frequency(
-                self.db.comments, term, colleges, start, end)
-
-if __name__ == '__main__':
-    md = MongoDao()
-    result = md.get_term_frequency('class', ['Georgia Tech', 'Purdue'])
-    for doc in result:
-        print doc
+    def comments_term_frequency(self, term, colleges, start, end):
+        return self.get_term_frequency(
+            self.db.comments, term, colleges, start, end)

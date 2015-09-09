@@ -3,11 +3,25 @@
     <h5 class="text-center">Word Search</h5>
 </div>
 <div class="row">
-    <dropdown-multiselect colleges="wordSearch.colleges"></dropdown-multiselect>
+    <dropdown-multiselect
+            colleges="wordSearch.colleges"
+            select-college="wordSearch.selectCollege(college)">
+    </dropdown-multiselect>
     <form class="navbar-form navbar-left" role="search">
         <div class="form-group">
-          <input type="text" class="form-control" placeholder="enter a word or phrase">
+            <input type="text"
+                 class="form-control"
+                 placeholder="enter a word or phrase"
+                 ng-model="wordSearch.term">
         </div>
-        <button type="submit" class="btn btn-default">search</button>
+        <button
+            type="submit"
+            class="btn btn-default"
+            ng-click="wordSearch.validate()">
+            search
+        </button>
     </form>
+</div>
+<div class="row">
+    <time-series-graph></time-series-graph>
 </div>
