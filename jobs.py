@@ -1,4 +1,5 @@
 from collection import config
+from collection import models
 from collection.crawler import MultiThreadedCrawler
 from collection.dao import MongoDao
 from analysis.keyword_extractor import KeyWordExtractor
@@ -70,4 +71,4 @@ class MainJob(object):
                 print e
 
 if __name__ == '__main__':
-    MainJob([CrawlTask]).run()
+    MainJob([CrawlTask, ExtractionTask]).run()
