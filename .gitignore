@@ -4,7 +4,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+daily_job.log
 # Distribution / packaging
 .Python
 env/
