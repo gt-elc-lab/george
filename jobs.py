@@ -1,4 +1,5 @@
 from collection import config
+from collection import models
 from collection.crawler import MultiThreadedCrawler
 from collection.dao import MongoDao
 from analysis.keyword_extractor import KeyWordExtractor
@@ -38,6 +39,13 @@ class ExtractionTask(Task):
                 except Exception as e:
                     print e
 
+class CreateGraphTask(Task):
+
+    @staticmethod
+    def execute():
+        kg = KeywordGraphHandler()
+        kg.execute()
+
 
 class CrawlTask(Task):
     """ Task for scraping reddit """
@@ -63,4 +71,4 @@ class MainJob(object):
                 print e
 
 if __name__ == '__main__':
-    MainJob([CrawlTask]).run()
+    MainJob([CrawlTask, ExtractionTask]).run()

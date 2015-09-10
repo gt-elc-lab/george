@@ -86,3 +86,31 @@ class TermFreqHandler(RouteHandler):
         return {'college': data['_id']['college'],
                 'total': data['total'],
                 'date': self.to_datetime(data['_id'])}
+
+
+
+class KeywordGraphHandler(RouteHandler):
+
+    def __init__(self, dao=None):
+        self.dao = dao or MongoDao()
+
+    def execute(self, colleges=None, start=None, end=None):
+        if not start or not end:
+            end = datetime.datetime.today()
+            end = datetime.datetime(end.year, end.month, end.day)
+            start = end - datetime.timedelta(days=1)
+        if colleges == None:
+            colleges = self.dao.get_colleges()
+        recent_posts = []
+        for school in colleges:
+            recent_posts = recent_posts + [post.to_record() for post in self.dao.get_latest_posts(school)]
+        graph = {'nodes':[], 'edges':[]}
+        
+        recent_posts = [post for post in recent_posts if 'keywords' in post]
+        index = 0
+        for current in recent_posts:
+            graph['nodes'].append({'id':str(current['_id'])})
+            for post in [related for related in recent_posts if related['_id'] != current['_id'] and len(set(related['keywords']) & set(current['keywords'])) != 0]:
+                graph['edges'].append({'source':index, 'target':recent_posts.index(post)})
+            index += 1
+        return graph
