@@ -42,3 +42,7 @@
 .x.axis path {
   display: none;
 }
+
+.area {
+    /*opacity: 0.25;*/
+}

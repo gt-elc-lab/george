@@ -65,6 +65,11 @@ function TimeSeriesGraph() {
         var yScale = d3.scale.linear()
             .range([HEIGHT - MARGIN.top, MARGIN.bottom]);
 
+        var area = d3.svg.area()
+            .x(function(d) {return xScale(new Date(d.date));})
+            .y0(HEIGHT - MARGIN.bottom)
+            .y1(function(d) {return yScale(d.total);});
+
         var line = d3.svg.line()
             .x(function(d) {
                 return xScale(new Date(d.date));
@@ -82,7 +87,7 @@ function TimeSeriesGraph() {
                 $scope.colleges = args.colleges.map(function(college) {
                 return {
                         name: college,
-                        color: '#' + $scope.getColor(college)
+                        color: $scope.getColor(college)
                     };
                 });
                 var data = response.data;
@@ -142,10 +147,11 @@ function TimeSeriesGraph() {
                 */
                 data.forEach(function(college) {
                     // TODO(simplyfaisal): add area filling.
-                    var color = '#' + $scope.getColor(college.college);
+                    var color = d3.rgb($scope.getColor(college.college));
                     var path = svg.append("path")
                         .datum(college.data)
                         .attr("class", "line")
+                        .attr('class', 'area')
                         .attr('fill', 'none')
                         .style('stroke', color)
                         .style('stroke-width', '3px')
@@ -166,6 +172,7 @@ function TimeSeriesGraph() {
                 });
 
             }).error(function(error) {
+                $scope.loading = false;
                 // TODO(simplyfaisal): add a panel that displays on error.
                 alert('an error occured');
                 console.log(error);
