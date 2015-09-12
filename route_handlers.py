@@ -97,7 +97,6 @@ class KeywordGraphHandler(RouteHandler):
     def execute(self, colleges=None, start=None, end=None):
         if not start or not end:
             end = datetime.datetime.today()
-            end = datetime.datetime(end.year, end.month, end.day)
             start = end - datetime.timedelta(days=1)
         if colleges == None:
             colleges = self.dao.get_colleges()
@@ -105,7 +104,7 @@ class KeywordGraphHandler(RouteHandler):
         for school in colleges:
             recent_posts = recent_posts + [post.to_record() for post in self.dao.get_latest_posts(school)]
         graph = {'nodes':[], 'edges':[]}
-        
+
         recent_posts = [post for post in recent_posts if 'keywords' in post]
         index = 0
         for current in recent_posts:

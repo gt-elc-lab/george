@@ -35,6 +35,11 @@ class MongoDao(object):
         """
         return self.db.comments
 
+    @property
+    def graph_collection(self):
+        return self.db.graphs
+
+
     def get_post(self, post_id):
         """
         Get a post model for the post with the given id.
@@ -220,3 +225,33 @@ class MongoDao(object):
     def comments_term_frequency(self, term, colleges, start, end):
         return self.get_term_frequency(
             self.db.comments, term, colleges, start, end)
+
+    def date_query(self, collection, start, end, constraints=None):
+        query = {
+            'created_utc': {'$gte': start, '$lte': end},
+            }
+        if constraints:
+            query.update(constraints)
+        return collection.find(query)
+
+    def get_within_range(self, start, end, constraints=None):
+        posts = self.post_date_query(start, end, constraints)
+        comments = self.comment_date_query(start, end, constraints)
+        return posts + comments
+
+    def post_date_query(self, start, end, constraints=None):
+        return map(models.Post.from_record,
+            self.date_query(self.db.posts, start, end, constraints))
+
+    def comment_date_query(self, start, end, constraints=None):
+        return map(models.Comment.from_record,
+            self.date_query(self.db.comments, start, end, constraints))
+
+    def insert_graph(self, graph_record):
+        return self.db.graphs.find_one_and_replace({
+            'date': graph_record['date'], 'college': graph_record['college']},
+            replacement=graph_record, upsert=True)
+
+    def get_graph(self, date):
+        return self.db.graphs.find_one({'date': date})
+

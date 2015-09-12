@@ -1,9 +1,12 @@
+import datetime
+
 from collection import config
 from collection import models
 from collection.crawler import MultiThreadedCrawler
 from collection.dao import MongoDao
 from analysis.keyword_extractor import KeyWordExtractor
 from analysis.sentiment_analysis import SentimentHelper
+from analysis.graph import GraphGenerator
 
 class Task(object):
     """ Abstract class for defining tasks """
@@ -43,9 +46,21 @@ class CreateGraphTask(Task):
 
     @staticmethod
     def execute():
-        kg = KeywordGraphHandler()
-        kg.execute()
-
+        mongo_dao = MongoDao()
+        colleges = mongo_dao.get_colleges()
+        today = datetime.datetime.utcnow()
+        # get rid of the time fields
+        today = datetime.datetime(today.year, today.month, today.day)
+        today -= datetime.timedelta(days=2)
+        yesterday = today - datetime.timedelta(days=1)
+        for college in colleges:
+            query = {'college': college,
+                     'keywords': {'$exists': True}}
+            documents = mongo_dao.get_within_range(yesterday, today, query)
+            if documents:
+                graph = GraphGenerator.create_graph(documents)
+                graph.update({'date': today, 'college': college})
+                mongo_dao.insert_graph(graph)
 
 class CrawlTask(Task):
     """ Task for scraping reddit """
@@ -71,4 +86,4 @@ class MainJob(object):
                 print e
 
 if __name__ == '__main__':
-    MainJob([CrawlTask, ExtractionTask]).run()
+    MainJob([CreateGraphTask]).run()
