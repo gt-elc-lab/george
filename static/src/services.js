@@ -29,8 +29,8 @@ function RestService($http) {
                 colleges: colleges
             };
         if (opt_start && opt_end) {
-            params.start = opt_start;
-            params.end = opt_end;
+            params.start = Math.floor(opt_start.valueOf() / 1000);
+            params.end = Math.floor(opt_end.valueOf() / 1000);
         }
         return $http.get('/wordsearch', { params: params });
     };

@@ -48,11 +48,9 @@ class CreateGraphTask(Task):
     def execute():
         mongo_dao = MongoDao()
         colleges = mongo_dao.get_colleges()
-        today = datetime.datetime.utcnow()
-        # get rid of the time fields
-        today = datetime.datetime(today.year, today.month, today.day)
+        today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         today -= datetime.timedelta(days=2)
-        yesterday = today - datetime.timedelta(days=1)
+        yesterday = today - datetime.timedelta(days=2)
         for college in colleges:
             query = {'college': college,
                      'keywords': {'$exists': True}}
@@ -86,4 +84,4 @@ class MainJob(object):
                 print e
 
 if __name__ == '__main__':
-    MainJob([CreateGraphTask]).run()
+    MainJob([CrawlTask, ExtractionTask]).run()

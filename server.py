@@ -1,6 +1,7 @@
 import os
 import json
 import flask
+import datetime
 from collection.dao import MongoDao
 import route_handlers
 
@@ -40,11 +41,15 @@ def send_frequency_data():
     start = flask.request.args.get('start')
     end = flask.request.args.get('end')
     handler = route_handlers.TermFreqHandler()
+    if start:
+        start = datetime.datetime.utcfromtimestamp(start)
+    if end:
+        end = datetime.datetime.utcfromtimestamp(end)
     data = handler.execute(term, colleges, start, end)
     return flask.jsonify({'data': data})
 
 @application.route('/trending')
 def send_graph():
-    colleges = flask.request.args('college')
-    date = flask.request.args('date')
-    return
+    college = flask.request.args.get('college')
+    handler = route_handlers.GraphHandler()
+    return flask.jsonify(handler.execute(college))
