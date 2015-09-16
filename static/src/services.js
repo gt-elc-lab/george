@@ -35,6 +35,12 @@ function RestService($http) {
         return $http.get('/wordsearch', { params: params });
     };
 
+    service.getTrendingGraph = function(college, opt_start, opt_end) {
+        var params  = {
+
+        }
+    }
+
     return service;
 }
 
