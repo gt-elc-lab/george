@@ -79,7 +79,7 @@ class MongoDao(object):
             a list of models.Comment object
         """
         post = self.get_post(post_id)
-        return [self.get_comment(comment_id) for comment_id in post.comments]
+        return [self.get_post(comment_id) for comment_id in post.comments]
 
     def get_colleges(self):
         """
@@ -102,35 +102,6 @@ class MongoDao(object):
         """
         return self.db.posts.find_one_and_replace(
             {'reddit_id': post_record['reddit_id']}, post_record, projection={'_id': True},
-            return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
-
-    def get_comment(self, comment_id):
-        """
-        Get a comment model.
-
-        Args:
-            comment_id (str):
-
-        Returns:
-            a models.Comment
-        """
-        if isinstance(comment_id, str):
-            comment_id = ObjectId(comment_id)
-        comment_record = self.db.comments.find_one({'_id': comment_id})
-        return models.Comment.from_record(comment_record)
-
-    def insert_comment(self, comment_record):
-        """
-        Insert the comment into the database.
-
-        Args:
-            comment_record (dict):
-
-        Returns:
-            ObjectId for the inserted post
-        """
-        return self.db.comments.find_one_and_replace(
-            {'reddit_id': comment_record['reddit_id']}, comment_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
 
     def key_exists(self, collection, keys):
