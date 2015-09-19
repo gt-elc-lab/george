@@ -248,7 +248,7 @@ class MongoDBService(object):
         inserted = []
         for comment in comments:
             comment.update(self.sentiment.compute_sentiment(comment['text']))
-            _id = self.dao.insert_comment(comment)
+            _id = self.dao.insert_post(comment)
             inserted.append(_id)
         return inserted
 
@@ -297,6 +297,7 @@ class MongoDBService(object):
             'college': college,
             'created_utc': datetime.utcfromtimestamp(submission.created_utc),
             'comments': []
+			'type': post
         }
 
     @staticmethod
@@ -318,4 +319,5 @@ class MongoDBService(object):
             'college': college,
             'subreddit' : subreddit,
             'created_utc': datetime.utcfromtimestamp(comment.created_utc)
+			'type': comment
         }
