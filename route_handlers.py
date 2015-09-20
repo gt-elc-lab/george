@@ -36,22 +36,16 @@ class TermFreqHandler(RouteHandler):
             end = datetime.datetime(end.year, end.month, end.day)
             start = end - datetime.timedelta(days=30)
         post_counts = self.dao.posts_term_frequency(term, colleges, start, end)
-        comment_counts = self.dao.comments_term_frequency(
-            term, colleges, start, end)
-        formatted_data = map(self.transform, list(post_counts) + list(comment_counts))
+        formatted_data = map(self.transform, list(post_counts))
         buckets = defaultdict(list)
         # bucket the data by college
         [buckets[point['college']].append(point) for point in formatted_data]
         final_form = []
         for college, data in buckets.iteritems():
             collision_buckets = defaultdict(list)
-            # First bucket the data point by day. Then reduce the array to a single value.
-            # This is to ensure that counts for posts and comments are summed.
+            # First bucket the data point by day.
             for data_point in data:
                 collision_buckets[data_point['date']].append(data_point)
-            for date, values in collision_buckets.iteritems():
-                collision_buckets[date] = reduce(
-                    lambda x, y: {'total': x['total'] + y['total'], 'date': x['date'], 'college': x['college']}, values)
             # Fill in any days that don't appear with a count of 0. This prevents the visualization
             # from being misleading on the front end.
             normalized = []
