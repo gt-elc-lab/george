@@ -84,4 +84,4 @@ class MainJob(object):
                 print e
 
 if __name__ == '__main__':
-    MainJob([CrawlTask, ExtractionTask]).run()
+    MainJob([CrawlTask]).run()

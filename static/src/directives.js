@@ -2,6 +2,7 @@ var george = angular.module('george');
 
 george.directive('dropdownMultiselect', DropdownMultiselect);
 george.directive('timeSeriesGraph', ['RestService', TimeSeriesGraph]);
+george.directive('trendingGraph', ['RestService', TrendingGraph]);
 
 function DropdownMultiselect() {
     var directive = {
@@ -191,6 +192,76 @@ function TimeSeriesGraph() {
                     return calcFn(innerArray.data.map(mapFn));
                 }));
     }
+
+    return directive;
+}
+
+function TrendingGraph() {
+    var directive = {
+        scope: {},
+        restrict: 'AE',
+        templateUrl: '../templates/trendinggraph.html',
+        replace: true
+    };
+
+    directive.controller = function($scope, RestService) {
+        $scope.restService = RestService;
+    };
+
+    directive.link = function($scope, $element, $attr) {
+        var w = 900;
+        var h = 500;
+        var svg = d3.select('#force-layout-graph').append('svg')
+                    .attr('width', w)
+                    .attr('height', h);
+        $scope.$on('trending-graph', function(e, args) {
+            console.log(args);
+            $scope.restService.getTrendingGraph(args.college)
+            .success(function(data) {
+                svg.selectAll("*").remove();
+                    var force = d3.layout.force()
+                                    .nodes(data.nodes)
+                                    .links(data.edges)
+                                    .size([w, h])
+                                    .linkDistance([20])
+                                    .charge([-20])
+                                    .start();
+
+                    var edges = svg.selectAll('line')
+                                    .data(data.edges)
+                                    .enter()
+                                    .append('line')
+                                    .style('stroke','#ccc')
+                                    .style('stroke-width', 1);
+
+                    var nodes = svg.selectAll('circle')
+                                    .data(data.nodes)
+                                    .enter()
+                                    .append('circle')
+                                    .attr('r', 5)
+                                    .style('fill', function(d) {return d.color;})
+                                    .call(force.drag);
+                    nodes.on('click', function(d) {
+                        $scope.current = d;
+                        $scope.$apply();
+                    });
+
+                    force.on('tick', function() {
+                        edges.attr('x1', function(d) {return d.source.x;});
+                        edges.attr('y1', function(d) {return d.source.y;});
+                        edges.attr('x2', function(d) {return d.target.x;});
+                        edges.attr('y2', function(d) {return d.target.y;});
+
+                        nodes.attr('cx', function(d) {return d.x;});
+                        nodes.attr('cy', function(d) {return d.y;});
+                    });
+
+            })
+            .error(function(error) {
+
+            });
+        });
+    };
 
     return directive;
 }

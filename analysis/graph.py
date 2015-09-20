@@ -19,15 +19,15 @@ class GraphGenerator(object):
                     if angle >= threshold:
                         doc = documents[i]
                         other = documents[j]
-                        a = set(doc.keywords)
-                        b = set(other.keywords)
-                        intersection = a & b
-                        if intersection:
-                            edge = {'source': index_lookup[doc._id],
+                        # a = set(doc.keywords)
+                        # b = set(other.keywords)
+                        # intersection = a & b
+                        # if intersection:
+                        edge = {'source': index_lookup[doc._id],
                                     'target': index_lookup[other._id],
-                                    'weight': len(intersection)
+                                    'weight': len([])
                                     }
-                            edges.append(edge)
+                        edges.append(edge)
         return edges
 
 

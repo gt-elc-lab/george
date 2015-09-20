@@ -37,9 +37,10 @@ function RestService($http) {
 
     service.getTrendingGraph = function(college, opt_start, opt_end) {
         var params  = {
-
-        }
-    }
+            college: college
+        };
+        return $http.get('/trending', {params: params})
+    };
 
     return service;
 }

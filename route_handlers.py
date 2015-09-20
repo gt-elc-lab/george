@@ -98,7 +98,7 @@ class GraphHandler(RouteHandler):
         if not start or not end:
             end = datetime.datetime.utcnow().replace(
                 hour=0, minute=0, second=0, microsecond=0)
-            start = end - datetime.timedelta(days=5)
+            start = end - datetime.timedelta(days=3)
         query = {'college': college,
                      'keywords': {'$exists': True}}
         documents = self.dao.get_within_range(start, end, query)

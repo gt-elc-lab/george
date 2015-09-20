@@ -38,11 +38,12 @@ function WordSearchController($scope, RestService, data) {
     }
 }
 
-function TrendingController(RestService, data) {
+function TrendingController($scope, RestService, data) {
     this.colleges = data.colleges;
     this.selectedCollege = this.colleges[0];
 
     this.drawGraph = function() {
-
-    }
+        console.log(this.selectedCollege);
+        $scope.$broadcast('trending-graph', {college: this.selectedCollege});
+    };
 }

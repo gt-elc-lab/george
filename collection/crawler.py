@@ -39,7 +39,7 @@ class RedditApiClient(object):
         """
         start_seconds = self.to_seconds(start)
         end_seconds = self.to_seconds(end)
-        # Format the string to create a cloud query that restricts the returned 
+        # Format the string to create a cloud query that restricts the returned
         # posts to those between the start and end date.
         query = self.CLOUD_QUERY.format(start=start_seconds, end=end_seconds)
         posts = self.reddit.search(query, subreddit=subreddit,
@@ -66,12 +66,12 @@ class RedditApiClient(object):
 
         Args:
             length (int) : length of the generated string
-        
+
         Returns:
             a random string
 
         """
-        return ''.join(random.choice(string.ascii_letters) 
+        return ''.join(random.choice(string.ascii_letters)
             for i in range(length))
 
     def to_seconds(self, dt):
@@ -85,12 +85,12 @@ class RedditApiClient(object):
             an int of the datetime seconds
         """
         return int(dt.strftime('%s'))
-   
+
 
 class RedditWorker(threading.Thread):
     """ self contained thread object """
 
-    def __init__(self, reddit_client, database_client, q, 
+    def __init__(self, reddit_client, database_client, q,
             interval=timedelta(days=14)):
         """
         Args:
@@ -150,7 +150,7 @@ class RedditWorker(threading.Thread):
             self.database_client.save(posts, college_info, RedditApiClient.get_comments)
             upper = lower
             lower -= self.interval
-    
+
     def get_start_time(self, college_info):
         """
         Get the time of the most recent post in the database from the specified
@@ -242,7 +242,7 @@ class MongoDBService(object):
             comments (list<praw.comment>):
 
         Returns:
-            a list of the ids that mongodb assigns to the comments. Used to 
+            a list of the ids that mongodb assigns to the comments. Used to
             create a reference to the comments within the posts
         """
         inserted = []
@@ -257,7 +257,7 @@ class MongoDBService(object):
         Returns the date of the last post crawled for the request school
 
         Args:
-            college_info (dict): { 'name': name of the college, 
+            college_info (dict): { 'name': name of the college,
                 'subreddit': name of the subreddit}
 
         Returns: A datetime object
@@ -296,15 +296,15 @@ class MongoDBService(object):
             'subreddit': subreddit,
             'college': college,
             'created_utc': datetime.utcfromtimestamp(submission.created_utc),
-            'comments': []
-			'type': post
+            'comments': [],
+			'type': 'POST'
         }
 
     @staticmethod
     def serialize_comment(comment, college_info):
         """
         Convert a praw  comment object to a dictionary
-        
+
         Args:
             submission (praw.comment) : praw comment object
             college_info (str) : college name
@@ -318,6 +318,6 @@ class MongoDBService(object):
             'downs': comment.downs,
             'college': college,
             'subreddit' : subreddit,
-            'created_utc': datetime.utcfromtimestamp(comment.created_utc)
-			'type': comment
+            'created_utc': datetime.utcfromtimestamp(comment.created_utc),
+			'type': 'COMMENT'
         }
