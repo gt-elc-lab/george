@@ -42,20 +42,21 @@ class TermFreqHandler(RouteHandler):
         [buckets[point['college']].append(point) for point in formatted_data]
         final_form = []
         for college, data in buckets.iteritems():
-            collision_buckets = defaultdict(list)
+            collision_buckets = {}
             # First bucket the data point by day.
             for data_point in data:
-                collision_buckets[data_point['date']].append(data_point)
+                collision_buckets[data_point['date']] = data_point
             # Fill in any days that don't appear with a count of 0. This prevents the visualization
             # from being misleading on the front end.
             normalized = []
             period_start = start
             while period_start <= end:
                 if period_start not in collision_buckets:
-                    normalized.append({'total': 0, 'date': period_start})
+                    normalized.append({'total': 0, 'date': period_start, 'college': college})
                 period_start += datetime.timedelta(days=1)
             # Grab the actual values.
-            normalized += [v for v in collision_buckets.itervalues()]
+            for v in collision_buckets.itervalues():
+                normalized.append(v)
             normalized.sort(key=lambda x: x['date'])
             final_form.append({'college': college, 'data': normalized})
         return final_form

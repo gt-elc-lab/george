@@ -223,8 +223,8 @@ function TrendingGraph() {
                                     .nodes(data.nodes)
                                     .links(data.edges)
                                     .size([w, h])
-                                    .linkDistance([20])
-                                    .charge([-20])
+                                    .linkDistance()
+                                    .charge()
                                     .start();
 
                     var edges = svg.selectAll('line')
@@ -241,6 +241,7 @@ function TrendingGraph() {
                                     .attr('r', 5)
                                     .style('fill', function(d) {return d.color;})
                                     .call(force.drag);
+
                     nodes.on('click', function(d) {
                         $scope.current = d;
                         $scope.$apply();
@@ -254,7 +255,17 @@ function TrendingGraph() {
 
                         nodes.attr('cx', function(d) {return d.x;});
                         nodes.attr('cy', function(d) {return d.y;});
+
+                        var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
+                        var keywords = svg.selectAll('text')
+                            .data(keywordPoints)
+                            .enter()
+                            .append('text')
+                            .attr('x', function(d) { return d.getX();})
+                            .attr('y', function(d) { return d.getY();})
+                            .text(function(d) {return d.term;});
                     });
+
 
             })
             .error(function(error) {
@@ -262,6 +273,43 @@ function TrendingGraph() {
             });
         });
     };
+
+    function Point(term, x, y) {
+        this.x = x;
+        this.y = y;
+        this.term = term;
+        this.frequency = 0;
+    }
+
+    Point.prototype.getX = function() {
+        return this.x / this.frequency;
+    };
+
+    Point.prototype.getY = function() {
+        return this.y / this.frequency;
+    };
+
+    function calcCenterOfMass(nodes) {
+        var counter = {}
+        nodes.forEach(function(n) {
+            n.keywords.forEach(function(keyword) {
+                if (!(keyword in counter)) {
+                    counter[keyword] = new Point(keyword, 0, 0);
+                }
+                var p = counter[keyword];
+                p.frequency++;
+                p.x = p.x + n.x;
+                p.y = p.y + n.y;
+            });
+        });
+
+
+        return Object.keys(counter).map(function(i) {
+            return counter[i];
+        }).filter(function(i) {
+            return i.frequency > 1;
+        });
+    }
 
     return directive;
 }

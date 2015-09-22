@@ -1,4 +1,4 @@
-PRODUCTION = True
+PRODUCTION = False
 TEST_DB_URI = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
 TEST_DB_NAME = 'redditdump'
 SUBREDDITS = [{'name': 'McGill University', 'subreddit': 'mcgill'},
