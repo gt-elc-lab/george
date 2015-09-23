@@ -1,11 +1,11 @@
-from analysis import keyword_extractor
+import keyword_extractor
 class GraphGenerator(object):
 
     def __init__(self):
         return
 
     @staticmethod
-    def create_graph(documents, threshold=0.2):
+    def create_graph(documents, threshold=0.15):
         tf = keyword_extractor.TFIDFHelper(get_text=lambda x: x.text)
         vectors = tf.perform_tfidf(documents)
         index_lookup = {doc._id: i for i, doc in enumerate(documents)}

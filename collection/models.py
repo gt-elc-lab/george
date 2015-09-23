@@ -35,7 +35,8 @@ class Post(object):
     	Returns:
             a json representation of the object
     	"""
-        self.comments = map(str, self.comments)
+        if self.type == 'POST':
+            self.comments = [str(_id) for _id in self.comments]
         self._id = str(self._id)
         return self.__dict__
 

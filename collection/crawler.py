@@ -297,7 +297,8 @@ class MongoDBService(object):
             'college': college,
             'created_utc': datetime.utcfromtimestamp(submission.created_utc),
             'comments': [],
-			'type': 'POST'
+			'type': 'POST',
+            'keywords': []
         }
 
     @staticmethod
@@ -319,5 +320,6 @@ class MongoDBService(object):
             'college': college,
             'subreddit' : subreddit,
             'created_utc': datetime.utcfromtimestamp(comment.created_utc),
-			'type': 'COMMENT'
+			'type': 'COMMENT',
+            'keywords': []
         }
