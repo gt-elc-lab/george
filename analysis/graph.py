@@ -1,4 +1,4 @@
-from analysis import keyword_extractor
+import keyword_extractor
 class GraphGenerator(object):
 
     def __init__(self):
