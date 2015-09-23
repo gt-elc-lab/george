@@ -5,8 +5,6 @@ from collection import models
 from collection.crawler import MultiThreadedCrawler
 from collection.dao import MongoDao
 from analysis.keyword_extractor import KeyWordExtractor
-from analysis.sentiment_analysis import SentimentHelper
-from analysis.graph import GraphGenerator
 
 class Task(object):
     """ Abstract class for defining tasks """

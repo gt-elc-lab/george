@@ -98,7 +98,7 @@ class GraphHandler(RouteHandler):
                      'keywords': {'$exists': True}}
         documents = self.dao.get_within_range(start, end, query)
         if documents:
-            edge_list = GraphGenerator.create_graph(documents)
+            edge_list = GraphGenerator.cosine_similarity(documents)
             documents = [doc.to_json() for doc in documents]
             return {'nodes': documents, 'edges': edge_list}
 
