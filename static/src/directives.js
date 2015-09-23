@@ -215,7 +215,6 @@ function TrendingGraph() {
                     .attr('width', w)
                     .attr('height', h);
         $scope.$on('trending-graph', function(e, args) {
-            console.log(args);
             $scope.restService.getTrendingGraph(args.college)
             .success(function(data) {
                 svg.selectAll("*").remove();
@@ -223,48 +222,63 @@ function TrendingGraph() {
                                     .nodes(data.nodes)
                                     .links(data.edges)
                                     .size([w, h])
-                                    .linkDistance()
-                                    .charge()
-                                    .start();
+                                    .linkDistance(function(d, i) {
+                                        return 40 - d.weight;
+                                    })
+                                    .charge(-50);
+                    setTimeout(function() {
 
-                    var edges = svg.selectAll('line')
-                                    .data(data.edges)
-                                    .enter()
-                                    .append('line')
-                                    .style('stroke','#ccc')
-                                    .style('stroke-width', 1);
+                        var n = 200;
+                        force.start();
+                        for (var i = n * n; i > 0; --i) force.tick();
+                        force.stop();
 
-                    var nodes = svg.selectAll('circle')
-                                    .data(data.nodes)
-                                    .enter()
-                                    .append('circle')
-                                    .attr('r', 5)
-                                    .style('fill', function(d) {return d.color;})
-                                    .call(force.drag);
+                        var edges = svg.selectAll('line')
+                                        .data(data.edges)
+                                        .enter()
+                                        .append('line')
+                                        .style('stroke','#ccc')
+                                        .style('stroke-width', 1)
+                                        .attr("x1", function(d) { return d.source.x; })
+                                        .attr("y1", function(d) { return d.source.y; })
+                                        .attr("x2", function(d) { return d.target.x; })
+                                        .attr("y2", function(d) { return d.target.y; });
 
-                    nodes.on('click', function(d) {
-                        $scope.current = d;
-                        $scope.$apply();
-                    });
+                        var color = {POST: 'blue', COMMENT: 'red'};
+                        var nodes = svg.selectAll('circle')
+                                        .data(data.nodes)
+                                        .enter()
+                                        .append('circle')
+                                        .attr('r', 6)
+                                        .style('fill', function(d) {return color[d.type];})
+                                        .attr("cx", function(d) { return d.x; })
+                                        .attr("cy", function(d) { return d.y; });
 
-                    force.on('tick', function() {
-                        edges.attr('x1', function(d) {return d.source.x;});
-                        edges.attr('y1', function(d) {return d.source.y;});
-                        edges.attr('x2', function(d) {return d.target.x;});
-                        edges.attr('y2', function(d) {return d.target.y;});
+                        nodes.on('click', function(d) {
+                            $scope.current = d;
+                            $scope.$apply();
+                        });
 
-                        nodes.attr('cx', function(d) {return d.x;});
-                        nodes.attr('cy', function(d) {return d.y;});
-
-                        var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
+                        var keywordPoints = calcCenterOfMass(nodes[0].map(
+                            function(d) {return d.__data__;}));
+                        var frequencies = keywordPoints.map(function(d) {
+                                            return d.frequency;
+                                        })
+                        var fontSizeScale = d3.scale.linear()
+                                            .domain([d3.min(frequencies), d3.max(frequencies)])
+                                            .range([0, 30]);
                         var keywords = svg.selectAll('text')
                             .data(keywordPoints)
                             .enter()
                             .append('text')
                             .attr('x', function(d) { return d.getX();})
                             .attr('y', function(d) { return d.getY();})
+                            .style('fill', 'black')
+                            .style('font-size', function(d) {
+                                return fontSizeScale(d.frequency) + 'px';
+                            })
                             .text(function(d) {return d.term;});
-                    });
+                     }, 10);
 
 
             })

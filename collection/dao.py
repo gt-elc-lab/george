@@ -79,7 +79,14 @@ class MongoDao(object):
             a list of models.Comment object
         """
         post = self.get_post(post_id)
-        return [self.get_post(comment_id) for comment_id in post.comments]
+        return [self.get_comment(comment_id) for comment_id in post.comments]
+
+    def get_comment(self, comment_id):
+        if isinstance(comment_id, str):
+            comment_id = ObjectId(comment_id)
+        post_record = self.db.posts.find_one({'_id': comment_id})
+        return models.Comment.from_record(post_record)
+
 
     def get_colleges(self):
         """
@@ -104,7 +111,7 @@ class MongoDao(object):
             {'reddit_id': post_record['reddit_id']}, post_record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
 
-    def key_exists(self, collection, keys):
+    def key_exists(self, collection, keys, query=None):
         """
         Get the documents that contain all of the specified keys.
 
@@ -117,13 +124,16 @@ class MongoDao(object):
             a cursor for the documents returned by the query
         """
         matchers = {k: {'$exists': False} for k in keys}
+        if query:
+            matchers.update(query)
         return collection.find(matchers)
 
     def post_keys_exist(self, keys):
         """
         Gets posts that contain the specified keys.
         """
-        return map(models.Post.from_record, self.key_exists(self.db.posts, keys))
+        query = {'type': "POST"}
+        return map(models.Post.from_record, self.key_exists(self.db.posts, keys, query=query))
 
     def comment_keys_exist(self, keys):
         """
