@@ -11,7 +11,8 @@ from config import SUBREDDITS, CREDENTIALS
 from Queue import Queue
 from analysis import sentiment_analysis
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class RedditApiClient(object):
             a list of praw.comment objects
         """
         post.replace_more_comments(limit=None, threshold=0)
-        return praw.helpers.flatten_tree(post.comments)
+        return post.comments
 
     def random_name(self, length=10):
         """
@@ -120,7 +121,7 @@ class RedditWorker(threading.Thread):
             if end_date:
             	# Pad by a few hours to make sure we pick up any new comments
             	# for relatively new posts.
-                end_date -= timedelta(hours=12)
+                end_date -= timedelta(hours=6)
             else:
                 # The college is not in the database so just get the last month
                 # worth of data.
@@ -128,7 +129,6 @@ class RedditWorker(threading.Thread):
             self.crawl(college_info, start_date, end_date)
             logger.info('Finished {} from {} to {}'.format(
                 college_info['name'], start_date, end_date))
-            logging.info('{} items left in queue'.format(self.q.qsize()))
             self.q.task_done()
 
     def crawl(self, college_info, start, end):
@@ -179,7 +179,7 @@ class MultiThreadedCrawler(object):
         Activate the threads
         """
         q = Queue()
-        for i in range(16):
+        for i in range(len(self.colleges)):
             logger.info('Spawned #{}'.format(i))
             client = MongoDBService()
             worker = RedditWorker(
@@ -216,25 +216,23 @@ class MongoDBService(object):
         comment_count = 0
         for post in posts:
             # TODO(faisal): add error handling capability.
-            comment_records = [self.serialize_comment(comment, college_info)
-                               for comment in get_comments(post)]
+            comments = get_comments(post)
             post_record = self.serialize_post(post, college_info)
             comment_ids = []
-            if comment_records:
-                comment_ids = [projection['_id']
-                               for projection in self.insert_comments(comment_records)]
+            if comments:
+                comment_ids = [_id for _id in self.insert_comments(comments, college_info)]
             # Join the post to its comments by storing the object ids of the
             # comments
             post_record['comments'] = comment_ids
-            post_record.update(self.sentiment.compute_sentiment(post_record['text']))
-            self.dao.insert_post(post_record)
+            post_record.update(self.sentiment.compute_sentiment(post_record['body']))
+            self.dao.insert(post_record)
             post_count += 1
             comment_count += len(comment_ids)
         logger.info('Saved: {} {} posts {} comments'.format(
             college_info['name'], post_count, comment_count))
         return
 
-    def insert_comments(self, comments):
+    def insert_comments(self, comments, college_info):
         """
         Save the comments in the database.
 
@@ -247,9 +245,13 @@ class MongoDBService(object):
         """
         inserted = []
         for comment in comments:
-            comment.update(self.sentiment.compute_sentiment(comment['text']))
-            _id = self.dao.insert_post(comment)
-            inserted.append(_id)
+            comment_record = self.serialize_comment(comment, college_info)
+            comment_record.update(self.sentiment.compute_sentiment(comment.body))
+            if comment.replies:
+                comment_record['comments'] = self.insert_comments(comment.replies, college_info)
+            insert_result = self.dao.insert(comment_record)
+            # Store the ids of the the comments that were inserted.
+            inserted.append(insert_result['_id'])
         return inserted
 
     def last_post_date(self, college_info):
@@ -289,7 +291,7 @@ class MongoDBService(object):
         return {
             'title': submission.title,
             'reddit_id': submission.id,
-            'text': submission.selftext,
+            'body': submission.selftext,
             'url': submission.url,
             'ups': submission.ups,
             'downs': submission.downs,
@@ -297,8 +299,7 @@ class MongoDBService(object):
             'college': college,
             'created_utc': datetime.utcfromtimestamp(submission.created_utc),
             'comments': [],
-			'type': 'POST',
-            'keywords': []
+			'type': 'POST'
         }
 
     @staticmethod
@@ -313,13 +314,13 @@ class MongoDBService(object):
         college = college_info['name']
         subreddit = college_info['subreddit']
         return {
-            'text': comment.body,
+            'body': comment.body,
             'reddit_id': comment.id,
             'ups': comment.ups,
             'downs': comment.downs,
             'college': college,
             'subreddit' : subreddit,
             'created_utc': datetime.utcfromtimestamp(comment.created_utc),
-			'type': 'COMMENT',
-            'keywords': []
+            'comments': [],
+			'type': 'COMMENT'
         }

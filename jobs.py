@@ -1,4 +1,5 @@
 import datetime
+import sys
 
 from collection import config
 from collection import models
@@ -22,20 +23,35 @@ class ExtractionTask(Task):
     @staticmethod
     def execute():
         mongo_dao = MongoDao()
-        unanalysed_documents = mongo_dao.post_keys_exist(["keywords"])
-        for post in unanalysed_documents:
-            comments = mongo_dao.get_post_comments(post._id)
-            corpus = [post] + comments
-            corpus = filter(lambda x: x.text, corpus)
+        end = datetime.datetime.utcnow()
+        start = end - datetime.timedelta(days=3)
+        match = {'$match': {
+            '$or': [
+                {'keywords': {'$exists': False}},
+                {'created_utc': {'$gte': start, '$lte': end}},
+            ]
+        }}
+        group = {'$group': {
+            '_id': '$college',
+            'posts': {'$push': '$$ROOT'}
+        }}
+        pipeline = [match, group]
+        # Query matches post that do not have a keyword or were crawled within the last three days.
+        # By mixing the two we ensure that we the scores returned by tfidf are more relevant.
+        # In addition the keywords that we attach to documents will become much better the longer
+        # they are in the pipeline.
+        query_result = mongo_dao.post_collection.aggregate(pipeline)
+        for college in query_result:
+            documents = map(models.Post.from_record, college['posts'])
+            corpus = [doc for doc in documents if doc.body]
+            # Only perform keyword extraction if there are documents. Otherwise the keyword
+            # extractor will error.
             if corpus:
-                try:
-                    keyword_extractor = KeyWordExtractor(corpus)
-                    for index, document in enumerate(corpus):
-                        keywords = list(keyword_extractor.get_keywords(index))
-                        document.keywords = keywords
-                        mongo_dao.insert_post(document.to_record())
-                except Exception as e:
-                    print e
+                keyword_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.body)
+                for index, document in enumerate(corpus):
+                    document.keywords = list(keyword_extractor.get_keywords(index))
+                    mongo_dao.insert(document.to_record())
+
 
 class CrawlTask(Task):
     """ Task for scraping reddit """
@@ -43,22 +59,16 @@ class CrawlTask(Task):
     def execute():
         MultiThreadedCrawler(config.SUBREDDITS).start()
 
-class MainJob(object):
-
-    def __init__(self, tasks):
-        """
-            Args:
-                task (list<jobs.Task>):
-        """
-        self.tasks = tasks
-
-    def run(self):
-        """ Run all of the tasks """
-        for task in self.tasks:
-            try:
-                task.execute()
-            except Exception as e:
-                print e
-
 if __name__ == '__main__':
-    MainJob([CrawlTask, ExtractionTask]).run()
+    argument = sys.argv[1:]
+    if len(argument) > 1:
+        print 'Too many arguments, exiting.'
+        exit()
+    task = argument[0]
+    if task == "crawl":
+        CrawlTask.execute()
+    elif task == "extract":
+        ExtractionTask.execute()
+    else:
+        print 'Unrecognized arguments, exiting'
+        exit()

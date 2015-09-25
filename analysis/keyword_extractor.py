@@ -1,6 +1,7 @@
 
 import re
 import nltk
+from stop_words import get_stop_words
 import string
 import pymongo
 from nltk.stem.porter import PorterStemmer
@@ -8,7 +9,7 @@ from sklearn import feature_extraction
 
 class KeyWordExtractor(object):
 
-    def __init__(self, documents, analyser=None, text_accessor=lambda x: x.text):
+    def __init__(self, documents, analyser=None, text_accessor=lambda x: x):
         """
         Args:
             documents (list<T>):
@@ -33,7 +34,7 @@ class KeyWordExtractor(object):
 
 class TFIDFHelper(object):
 
-    def __init__(self, stopwords=nltk.corpus.stopwords.words('english'),
+    def __init__(self, stopwords=None,
                 get_text=lambda x: x):
         """
         Input:
@@ -41,10 +42,11 @@ class TFIDFHelper(object):
             get_text <function>: text accessor function to retrieve strings.
 
         """
-        self.stopwords = set(stopwords)
+        default_stop_words = nltk.corpus.stopwords.words('english') + get_stop_words('english')
+        self.stopwords = stopwords or set(default_stop_words)
         self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
         self.count_vectorizer = feature_extraction.text.CountVectorizer(
-            stop_words=stopwords, ngram_range=(1,2))
+            stop_words=self.stopwords, ngram_range=(1,1))
         self.get_text = get_text
         self.vocabulary_keys = None
         self.vocabulary_values = None

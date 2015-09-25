@@ -222,16 +222,7 @@ function TrendingGraph() {
                                     .nodes(data.nodes)
                                     .links(data.edges)
                                     .size([w, h])
-                                    .linkDistance(function(d, i) {
-                                        return 40 - d.weight;
-                                    })
-                                    .charge(-50);
-                    setTimeout(function() {
-
-                        var n = 200;
-                        force.start();
-                        for (var i = n * n; i > 0; --i) force.tick();
-                        force.stop();
+                                    .start();
 
                         var edges = svg.selectAll('line')
                                         .data(data.edges)
@@ -258,29 +249,6 @@ function TrendingGraph() {
                             $scope.current = d;
                             $scope.$apply();
                         });
-
-                        var keywordPoints = calcCenterOfMass(nodes[0].map(
-                            function(d) {return d.__data__;}));
-                        var frequencies = keywordPoints.map(function(d) {
-                                            return d.frequency;
-                                        })
-                        var fontSizeScale = d3.scale.linear()
-                                            .domain([d3.min(frequencies), d3.max(frequencies)])
-                                            .range([0, 30]);
-                        var keywords = svg.selectAll('text')
-                            .data(keywordPoints)
-                            .enter()
-                            .append('text')
-                            .attr('x', function(d) { return d.getX();})
-                            .attr('y', function(d) { return d.getY();})
-                            .style('fill', 'black')
-                            .style('font-size', function(d) {
-                                return fontSizeScale(d.frequency) + 'px';
-                            })
-                            .text(function(d) {return d.term;});
-                     }, 10);
-
-
             })
             .error(function(error) {
 

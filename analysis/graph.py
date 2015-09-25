@@ -6,7 +6,7 @@ class GraphGenerator(object):
 
     @staticmethod
     def cosine_similarity(documents, threshold=0.15):
-        tf = keyword_extractor.TFIDFHelper(get_text=lambda x: x.text)
+        tf = keyword_extractor.TFIDFHelper(get_text=lambda x: x.body)
         vectors = tf.perform_tfidf(documents)
         index_lookup = {doc._id: i for i, doc in enumerate(documents)}
         edges = []
@@ -31,7 +31,7 @@ class GraphGenerator(object):
 
 
     @staticmethod
-    def set_intersection(documents, threshold=1):
+    def keywords_intersection(documents, threshold=1):
         edges = []
         index_lookup = {doc._id: i for i, doc in enumerate(documents)}
         for i, doc in enumerate(documents):

@@ -2,6 +2,7 @@ import datetime
 from collections import defaultdict
 from analysis.graph import GraphGenerator
 from collection.dao import MongoDao
+from collection import models
 
 
 class RouteHandler(object):
@@ -87,18 +88,19 @@ class TermFreqHandler(RouteHandler):
 class GraphHandler(RouteHandler):
 
     def __init__(self, dao=None):
-        self.dao = dao or MongoDao()
+        self.mongo_dao = dao or MongoDao()
 
     def execute(self, college, start=None, end=None):
         if not start or not end:
-            end = datetime.datetime.utcnow().replace(
-                hour=0, minute=0, second=0, microsecond=0)
+            end = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             start = end - datetime.timedelta(days=3)
         query = {'college': college,
-                     'keywords': {'$exists': True}}
-        documents = self.dao.get_within_range(start, end, query)
+                 'keywords': {'$exists': True},
+                 'created_utc': {'$gte': start, '$lte': end},
+            }
+        documents = map(models.Post.from_record, self.mongo_dao.post_collection.find(query))
         if documents:
-            edge_list = GraphGenerator.cosine_similarity(documents)
+            edge_list = GraphGenerator.keywords_intersection(documents)
             documents = [doc.to_json() for doc in documents]
             return {'nodes': documents, 'edges': edge_list}
 
