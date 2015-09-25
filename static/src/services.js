@@ -1,7 +1,7 @@
 var george = angular.module('george');
 
-george.service('RestService', RestService);
-george.service('ColorHashService', ColorHashService);
+george.factory('RestService', RestService);
+george.factory('ColorHashService', ColorHashService);
 
 RestService.$inject = ['$http'];
 function RestService($http) {
@@ -39,9 +39,16 @@ function RestService($http) {
         var params  = {
             college: college
         };
-        return $http.get('/trending', {params: params})
+        return $http.get('/trending', {params: params});
     };
 
+    service.getTodaysActivity = function(college) {
+        var params = {
+            college: college,
+            offset : new Date().getTimezoneOffset()
+        };
+        return $http.get('/daily', {params: params, cache: true});
+    };
     return service;
 }
 

@@ -13,28 +13,20 @@ george.config(function($stateProvider, $urlRouterProvider) {
             data: colleges
         }
     })
-    .state('app', {
-        url: '/app',
-        templateUrl: '../views/app.html'
-    })
-    .state('app.wordsearch', {
-        url: '/wordsearch',
-        templateUrl:'../views/wordsearch.html',
-        controller: 'WordSearchController',
-        controllerAs:'wordSearch',
+    .state('dashboard', {
+        url: '/dashboard/:college',
+        templateUrl: '../views/dashboard.html',
+        controller: 'DashboardController',
+        controllerAs: 'dashboard',
         resolve: {
-            data: colleges
+            activity: function(RestService, $stateParams) {
+                return RestService.getTodaysActivity($stateParams.college)
+                    .then(function(response) {
+                        return response.data.activity;
+                    });
+            }
         }
     })
-    .state('app.trending', {
-        url: '/trending/:college',
-        templateUrl:'../views/trending.html',
-        controller: 'TrendingController',
-        controllerAs:'trending',
-        resolve: {
-            data: colleges
-        }
-    });
 
     function colleges(RestService) {
         return RestService.getCollegeList().then(function(response) {

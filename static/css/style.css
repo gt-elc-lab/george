@@ -46,3 +46,7 @@
 .area {
     /*opacity: 0.25;*/
 }
+
+.no-border-radius {
+    border-radius: 0px;
+}

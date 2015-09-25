@@ -1,0 +1,28 @@
+<div>
+  <nav class="navbar navbar-default no-border-radius">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-2">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" ui-sref="home()"><span class="text-warning"> George </span></a>
+        <a class="navbar-brand" ui-sref="home()">{{dashboard.vm.college}}</a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">About</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <div class="col-md-10 col-md-offset-1">
+    <div class="row">
+      <div class="text-center">
+        <h3> <span class="text-primary"> {{dashboard.vm.activity.posts}}</span> posts, <span class="text-primary"> {{dashboard.vm.activity.comments}}</span> comments today</h3>
+      </div>
+    </div>
+  </div>
+</div>
