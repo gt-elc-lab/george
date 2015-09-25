@@ -104,3 +104,33 @@ class GraphHandler(RouteHandler):
             documents = [doc.to_json() for doc in documents]
             return {'nodes': documents, 'edges': edge_list}
 
+class DailyActivityHandler(RouteHandler):
+
+    def __init__(self):
+        self.mongo_dao = MongoDao()
+        return
+
+    def execute(self, college, today):
+        match = {'$match': {
+                'college': college,
+                'created_utc': {'$gte': today}
+        }}
+        group = {'$group': {
+            '_id': '$type',
+            'activity': {'$sum': 1},
+        }}
+        pipeline = [match, group]
+        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        counts = defaultdict(int)
+        for _type in query_result:
+            counts[_type['_id']] = _type['activity']
+
+        return {
+            "activity": {
+                "posts": counts["POST"],
+                "comments": counts["COMMENT"]
+            }
+        }
+
+
+

@@ -53,3 +53,12 @@ def send_graph():
     college = flask.request.args.get('college')
     handler = route_handlers.GraphHandler()
     return flask.jsonify(handler.execute(college))
+
+@application.route('/daily')
+def send_activity():
+    college = flask.request.args.get('college')
+    offset = flask.request.args.get('offset')
+    today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today += datetime.timedelta(minutes=int(offset))
+    handler = route_handlers.DailyActivityHandler()
+    return flask.jsonify(handler.execute(college, today))
