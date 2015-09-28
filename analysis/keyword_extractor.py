@@ -46,7 +46,7 @@ class TFIDFHelper(object):
         self.stopwords = stopwords or set(default_stop_words)
         self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
         self.count_vectorizer = feature_extraction.text.CountVectorizer(
-            stop_words=self.stopwords, ngram_range=(1,1))
+            stop_words=self.stopwords, ngram_range=(1, 1))
         self.get_text = get_text
         self.vocabulary_keys = None
         self.vocabulary_values = None

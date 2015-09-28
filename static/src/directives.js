@@ -4,6 +4,9 @@ george.directive('dropdownMultiselect', DropdownMultiselect);
 george.directive('timeSeriesGraph', ['RestService', TimeSeriesGraph]);
 george.directive('trendingGraph', ['RestService', TrendingGraph]);
 
+george.directive('trendingPanel', ['RestService', TrendingPanel]);
+george.directive('dailyActivityPanel', ['RestService', DailyActivityPanel]);
+
 function DropdownMultiselect() {
     var directive = {
         scope: {
@@ -292,6 +295,70 @@ function TrendingGraph() {
             return i.frequency > 1;
         });
     }
+
+    return directive;
+}
+
+function TrendingPanel() {
+    var directive = {
+        scope: {
+            college: '='
+        },
+        restrict: 'AE',
+        templateUrl: '../templates/trendingpanel.html',
+        replace: true
+    };
+
+    directive.controller = function($scope, RestService) {
+        $scope.loading;
+        $scope.render = function(limit) {
+            RestService.getTrendingKeywords($scope.college, limit)
+            .then(function(response) {
+                $scope.keywords = response.data.data;
+                var totals = $scope.keywords.map(function(d) {return d.total});
+                $scope.scale = d3.scale.linear()
+                     .domain([0, d3.max(totals)])
+                     .range([0, 100]);
+            });
+        };
+        $scope.render(1);
+
+    };
+
+    directive.link = function($scope, $element, $attrs) {
+        var nav = $element.find('ul');
+        nav.children().each(function() {
+            $(this).on('click', function() {
+                nav.children().each(function() {
+                    $(this).removeClass('active');
+                });
+                $(this).addClass('active');
+                $scope.render(+this.dataset.daysago);
+            });
+        });
+    };
+
+    return directive;
+}
+
+function DailyActivityPanel() {
+    var directive = {
+        scope: {
+            activity: '=',
+
+        },
+        restrict: 'AE',
+        templateUrl: '../templates/dailyactivitypanel.html',
+        replace: true
+    };
+
+    directive.controller = function($scope, RestService) {
+
+    };
+
+    directive.link = function($scope, $element, $attrs) {
+
+    };
 
     return directive;
 }

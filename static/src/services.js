@@ -49,6 +49,15 @@ function RestService($http) {
         };
         return $http.get('/daily', {params: params, cache: true});
     };
+
+    service.getTrendingKeywords = function(college, dayLimit) {
+        var params = {
+            college: college,
+            days_ago: dayLimit,
+            offset: new Date().getTimezoneOffset()
+        };
+        return $http.get('/trending', {params: params, cache: true});
+    };
     return service;
 }
 

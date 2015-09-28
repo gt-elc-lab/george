@@ -1,0 +1,24 @@
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">Trending</h3>
+    </div>
+    <div class="panel-body">
+        <div class="text-center">
+            <ul class="nav nav-pills">
+                <li class="trending-pills active" data-daysago="1"><a href="">Now</a></li>
+                <li data-daysago="7"><a class="trending-pills" href="">7 Days</a></li>
+                <li data-daysago="30"><a class="trending-pills"href="">30 Days</a></li>
+            </ul>
+        </div>
+        <div>
+            <div ng-repeat="term in keywords">
+                <a>{{term.keyword}}</a>
+                <span class="pull-right">{{term.total}}</span>
+                <div class="progress">
+                    <div class="progress-bar" style="width:{{scale(term.total)}}%"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

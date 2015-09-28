@@ -50,3 +50,7 @@
 .no-border-radius {
     border-radius: 0px;
 }
+
+.progress {
+    margin-bottom: 10px;
+}

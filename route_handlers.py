@@ -133,4 +133,36 @@ class DailyActivityHandler(RouteHandler):
         }
 
 
+class TodaysPostsHandler(RouteHandler):
+
+    def __init__(self):
+        self.mongo_dao = MongoDao()
+
+    def execute(self, college, today):
+        query = {
+            'college': college,
+            'created_utc': {'$gte': today},
+            'type': 'POST'
+        }
+        query_result = self.mongo_dao.post_collection.find(query)
+        return map(lambda x: models.Post.from_record(x).to_json(), list(query_result))
+
+class TrendingKeyWordHandler(RouteHandler):
+
+    def __init__(self):
+        self.mongo_dao = MongoDao()
+
+    def execute(self, college,  date_limit):
+        match = {'$match': {'college': college, 'created_utc': {'$gte': date_limit}}}
+        project = {'$unwind': '$keywords'}
+        group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
+        sort = {'$sort': {'total': -1}}
+        limit = {'$limit': 10}
+        pipeline = [match, project, group, sort, limit]
+        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        format_output = lambda x: {'keyword': x['_id'], 'total': x['total']}
+        return map(format_output, query_result)
+
+
+
 

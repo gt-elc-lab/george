@@ -16,7 +16,7 @@ class MongoDao(object):
         if mongo_client:
             self.db = mongo_client
         else:
-            if config.PRODUCTION:
+            if True:
                 self.db = pymongo.MongoClient()['reddit']
             else:
                 self.db = pymongo.MongoClient(config.TEST_DB_URI)[config.TEST_DB_NAME]
@@ -27,17 +27,6 @@ class MongoDao(object):
         The collection where the posts are stored.
         """
         return self.db.posts
-
-    @property
-    def comment_collection(self):
-        """
-        The collection where the comments are stored.
-        """
-        return self.db.comments
-
-    @property
-    def graph_collection(self):
-        return self.db.graphs
 
 
     def get_post(self, post_id):
@@ -68,7 +57,7 @@ class MongoDao(object):
         post_records = self.db.posts.find({'college': college}).limit(30)
         return [models.Post.from_record(record) for record in post_records]
 
-    def get_post_comments(self, post_id):
+    def get_comments(self, post_id):
         """
         Get comments for a given post.
 
@@ -79,13 +68,7 @@ class MongoDao(object):
             a list of models.Comment object
         """
         post = self.get_post(post_id)
-        return [self.get_comment(comment_id) for comment_id in post.comments]
-
-    def get_comment(self, comment_id):
-        if isinstance(comment_id, str):
-            comment_id = ObjectId(comment_id)
-        post_record = self.db.posts.find_one({'_id': comment_id})
-        return models.Comment.from_record(post_record)
+        return [self.get_post(comment_id) for comment_id in post.comments]
 
 
     def get_colleges(self):
@@ -96,50 +79,19 @@ class MongoDao(object):
         colleges.sort()
         return colleges
 
-
-    def insert_post(self, post_record):
+    def insert(self, record):
         """
         Inserts a post object into the database
 
         Args:
-            post_record (dict):
+            record (dict):
 
         Returns:
             an ObjectId for the post
         """
         return self.db.posts.find_one_and_replace(
-            {'reddit_id': post_record['reddit_id']}, post_record, projection={'_id': True},
+            {'reddit_id': record['reddit_id']}, record, projection={'_id': True},
             return_document=pymongo.collection.ReturnDocument.AFTER, upsert=True)
-
-    def key_exists(self, collection, keys, query=None):
-        """
-        Get the documents that contain all of the specified keys.
-
-        Args:
-            collection: the collection to operate on. In this case it will be
-                posts or comments.
-            keys list(str):
-
-        Returns:
-            a cursor for the documents returned by the query
-        """
-        matchers = {k: {'$exists': False} for k in keys}
-        if query:
-            matchers.update(query)
-        return collection.find(matchers)
-
-    def post_keys_exist(self, keys):
-        """
-        Gets posts that contain the specified keys.
-        """
-        query = {'type': "POST"}
-        return map(models.Post.from_record, self.key_exists(self.db.posts, keys, query=query))
-
-    def comment_keys_exist(self, keys):
-        """
-        Gets comments that contain the specified keys.
-        """
-        return map(models.Comment.from_record, self.key_exists(self.db.comments))
 
     def get_term_frequency(self, collection, term, colleges, start, end):
         """
@@ -202,37 +154,3 @@ class MongoDao(object):
     def posts_term_frequency(self, term, colleges, start, end):
         return self.get_term_frequency(
             self.db.posts, term, colleges, start, end)
-
-    def comments_term_frequency(self, term, colleges, start, end):
-        return self.get_term_frequency(
-            self.db.comments, term, colleges, start, end)
-
-    def date_query(self, collection, start, end, constraints=None):
-        query = {
-            'created_utc': {'$gte': start, '$lte': end},
-            }
-        if constraints:
-            query.update(constraints)
-        return collection.find(query)
-
-    def get_within_range(self, start, end, constraints=None):
-        posts = self.post_date_query(start, end, constraints)
-        comments = self.comment_date_query(start, end, constraints)
-        return posts + comments
-
-    def post_date_query(self, start, end, constraints=None):
-        return map(models.Post.from_record,
-            self.date_query(self.db.posts, start, end, constraints))
-
-    def comment_date_query(self, start, end, constraints=None):
-        return map(models.Comment.from_record,
-            self.date_query(self.db.comments, start, end, constraints))
-
-    def insert_graph(self, graph_record):
-        return self.db.graphs.find_one_and_replace({
-            'date': graph_record['date'], 'college': graph_record['college']},
-            replacement=graph_record, upsert=True)
-
-    def get_graph(self, date):
-        return self.db.graphs.find_one({'date': date})
-

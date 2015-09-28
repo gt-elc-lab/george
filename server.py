@@ -34,6 +34,14 @@ def send_comments(post_id):
 				for comment_model in dao.get_post_comments(str(post_id))]
 	return flask.jsonify({'comments': comments})
 
+@application.route('/todays_posts')
+def send_todays_posts():
+    college = flask.request.args.get('college')
+    offset = flask.request.args.get('offset')
+    handler = route_handlers.TodaysPostsHandler()
+    today = get_today_from_offset(int(offset))
+    return flask.jsonify({'posts': handler.execute(college, today)})
+
 @application.route('/wordsearch')
 def send_frequency_data():
     term = flask.request.args.get('term')
@@ -48,7 +56,6 @@ def send_frequency_data():
     data = handler.execute(term, colleges, start, end)
     return flask.jsonify({'data': data})
 
-@application.route('/trending')
 def send_graph():
     college = flask.request.args.get('college')
     handler = route_handlers.GraphHandler()
@@ -62,3 +69,20 @@ def send_activity():
     today += datetime.timedelta(minutes=int(offset))
     handler = route_handlers.DailyActivityHandler()
     return flask.jsonify(handler.execute(college, today))
+
+@application.route('/trending')
+def send_trending():
+    college = flask.request.args.get('college')
+    offset = flask.request.args.get('offset')
+    days_ago = flask.request.args.get('days_ago')
+    today = datetime.datetime.utcnow()
+    today += datetime.timedelta(minutes=int(offset))
+    today -= datetime.timedelta(days=int(days_ago))
+    handler = route_handlers.TrendingKeyWordHandler()
+    return flask.jsonify(data=handler.execute(college, today))
+
+def get_today_from_offset(offset):
+    today = datetime.datetime.utcnow().replace(hour=0,
+        minute=0, second=0, microsecond=0)
+    today += datetime.timedelta(minutes=int(offset))
+    return today
