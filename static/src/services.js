@@ -6,6 +6,7 @@ george.factory('ColorHashService', ColorHashService);
 RestService.$inject = ['$http'];
 function RestService($http) {
     var service = {};
+    var offset = new Date().getTimezoneOffset()
 
     service.getPost = function(postId) {
         return $http.get('/post/' + postId);
@@ -42,10 +43,10 @@ function RestService($http) {
         return $http.get('/trending', {params: params});
     };
 
-    service.getTodaysActivity = function(college) {
+    service.getTodaysActivitySummary = function(college) {
         var params = {
             college: college,
-            offset : new Date().getTimezoneOffset()
+            offset : offset
         };
         return $http.get('/daily', {params: params, cache: true});
     };
@@ -54,9 +55,19 @@ function RestService($http) {
         var params = {
             college: college,
             days_ago: dayLimit,
-            offset: new Date().getTimezoneOffset()
+            offset: offset
         };
         return $http.get('/trending', {params: params, cache: true});
+    };
+
+    service.getActivity = function(college, offset, dayLimit) {
+        var params = {
+            college: college,
+            days_ago: dayLimit,
+            offset: offset
+        };
+
+        return $http.get('/activity', {params: params, cache: true});
     };
     return service;
 }

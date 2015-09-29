@@ -20,7 +20,7 @@ george.config(function($stateProvider, $urlRouterProvider) {
         controllerAs: 'dashboard',
         resolve: {
             activity: function(RestService, $stateParams) {
-                return RestService.getTodaysActivity($stateParams.college)
+                return RestService.getTodaysActivitySummary($stateParams.college)
                     .then(function(response) {
                         return response.data.activity;
                     });

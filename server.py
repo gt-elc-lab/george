@@ -1,3 +1,4 @@
+import collections
 import os
 import json
 import flask
@@ -62,13 +63,37 @@ def send_graph():
     return flask.jsonify(handler.execute(college))
 
 @application.route('/daily')
-def send_activity():
+def send_daily_activity_summary():
     college = flask.request.args.get('college')
     offset = flask.request.args.get('offset')
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today += datetime.timedelta(minutes=int(offset))
-    handler = route_handlers.DailyActivityHandler()
+    handler = route_handlers.DailyActivitySummaryHandler()
     return flask.jsonify(handler.execute(college, today))
+
+@application.route('/activity')
+def send_activity():
+    college = flask.request.args.get('college')
+    offset = flask.request.args.get('offset')
+    lower_bound = flask.request.args.get('days_ago')
+    desired_date = get_today_from_offset(int(offset)) - datetime.timedelta(days=int(lower_bound))
+    handler = route_handlers.ActivityHandler()
+    data = handler.execute(college, desired_date)
+    buckets = collections.defaultdict(list)
+    for item in data:
+        date = datetime.datetime(year=item['_id']['year'],
+                                 month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
+        date += datetime.timedelta(minutes=int(offset))
+        buckets[date].append(item)
+    formatted_data = []
+    for k, v in buckets.iteritems():
+        data_point = {'date': str(k), 'comment': 0, 'post': 0}
+        for submission in v:
+            stype = submission['_id']['stype'].lower()
+            data_point[stype] += submission['total']
+        formatted_data.append(data_point)
+    return flask.jsonify(data=formatted_data)
+
 
 @application.route('/trending')
 def send_trending():

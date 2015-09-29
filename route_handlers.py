@@ -9,16 +9,13 @@ class RouteHandler(object):
     """ Abstract class for defining route handlers """
 
     def __init__(self):
-        return
+        self.mongo_dao = MongoDao()
 
     def execute(self):
         raise NotImplementedError()
 
 
 class TermFreqHandler(RouteHandler):
-
-    def __init__(self, dao=None):
-        self.dao =  dao or MongoDao()
 
     def execute(self, term, colleges, start=None, end=None):
         """
@@ -62,7 +59,8 @@ class TermFreqHandler(RouteHandler):
             final_form.append({'college': college, 'data': normalized})
         return final_form
 
-    def to_datetime(self, _id):
+    @staticmethod
+    def to_datetime(_id):
         """
             Args:
                 _id (dict):
@@ -87,9 +85,6 @@ class TermFreqHandler(RouteHandler):
 
 class GraphHandler(RouteHandler):
 
-    def __init__(self, dao=None):
-        self.mongo_dao = dao or MongoDao()
-
     def execute(self, college, start=None, end=None):
         if not start or not end:
             end = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -104,11 +99,7 @@ class GraphHandler(RouteHandler):
             documents = [doc.to_json() for doc in documents]
             return {'nodes': documents, 'edges': edge_list}
 
-class DailyActivityHandler(RouteHandler):
-
-    def __init__(self):
-        self.mongo_dao = MongoDao()
-        return
+class DailyActivitySummaryHandler(RouteHandler):
 
     def execute(self, college, today):
         match = {'$match': {
@@ -116,7 +107,7 @@ class DailyActivityHandler(RouteHandler):
                 'created_utc': {'$gte': today}
         }}
         group = {'$group': {
-            '_id': '$type',
+            '_id': 'stype',
             'activity': {'$sum': 1},
         }}
         pipeline = [match, group]
@@ -135,14 +126,11 @@ class DailyActivityHandler(RouteHandler):
 
 class TodaysPostsHandler(RouteHandler):
 
-    def __init__(self):
-        self.mongo_dao = MongoDao()
-
     def execute(self, college, today):
         query = {
             'college': college,
             'created_utc': {'$gte': today},
-            'type': 'POST'
+            'stype': 'POST'
         }
         query_result = self.mongo_dao.post_collection.find(query)
         return map(lambda x: models.Post.from_record(x).to_json(), list(query_result))
@@ -164,5 +152,37 @@ class TrendingKeyWordHandler(RouteHandler):
         return map(format_output, query_result)
 
 
+class ActivityHandler(RouteHandler):
 
+   def execute(self, college, threshold):
+        query = {
+           'college': college,
+           'created_utc': {'$gte': threshold}
+        }
+        match ={'$match': query}
+        project = {'$project': {
+                'stype': 1,
+                'y': {'$year': '$created_utc'},
+                'm': {'$month': '$created_utc'},
+                'd': {'$dayOfMonth': '$created_utc'},
+                'h': {'$hour': '$created_utc'}
+        }}
+        group = {'$group': {
+         '_id': {
+             'year': '$y',
+             'month': '$m',
+             'day': '$d',
+             'hour': '$h',
+             'stype': '$stype'
+         },
+        'total': {'$sum': 1},
+         }}
+        sort = {'$sort':{
+             '_id.year': -1,
+             '_id.month': -1,
+             '_id.day' : -1,
+             '_id.hour': -1
+             }}
+        pipeline = [match, project, group, sort]
+        return self.mongo_dao.post_collection.aggregate(pipeline)
 

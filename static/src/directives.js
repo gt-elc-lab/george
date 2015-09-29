@@ -6,6 +6,8 @@ george.directive('trendingGraph', ['RestService', TrendingGraph]);
 
 george.directive('trendingPanel', ['RestService', TrendingPanel]);
 george.directive('dailyActivityPanel', ['RestService', DailyActivityPanel]);
+george.directive('activityGraph', ['RestService', ActivityGraph]);
+
 
 function DropdownMultiselect() {
     var directive = {
@@ -349,6 +351,26 @@ function DailyActivityPanel() {
         },
         restrict: 'AE',
         templateUrl: '../templates/dailyactivitypanel.html',
+        replace: true
+    };
+
+    directive.controller = function($scope, RestService) {
+
+    };
+
+    directive.link = function($scope, $element, $attrs) {
+
+    };
+
+    return directive;
+}
+
+function ActivityGraph() {
+    var directive = {
+        scope: {
+        },
+        restrict: 'AE',
+        templateUrl: '../templates/activitygraph.html',
         replace: true
     };
 
