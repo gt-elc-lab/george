@@ -401,6 +401,7 @@ function ActivityGraph() {
         var yAxis = d3.svg.axis()
             .scale(yScale)
             .orient("left")
+            .tickFormat(d3.format("d"))
             .ticks(5);
 
         var svg = d3.select('#activity-graph').append("svg")

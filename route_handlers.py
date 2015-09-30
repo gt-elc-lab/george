@@ -186,3 +186,19 @@ class ActivityHandler(RouteHandler):
         pipeline = [match, project, group, sort]
         return self.mongo_dao.post_collection.aggregate(pipeline)
 
+class KeyWordTreeHandler(RouteHandler):
+
+    def execute(self, college, keyword):
+        match = {'$match': {'college': college, 'keywords': keyword}}
+        project = {'$unwind': '$keywords'}
+        group = {'$group': {'_id': '$keywords', 'size': {'$sum': 1}}}
+        sort = {'$sort': {'size': -1}}
+        limit = {'$limit': 10}
+        pipeline = [match, project, group, sort, limit]
+        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        formatted_output = map(lambda x: {'name': x['_id'], 'size': x['size']}, query_result)
+
+        return {
+            'name': keyword,
+            'children': filter(lambda x: x['name'] != keyword, formatted_output)
+        }

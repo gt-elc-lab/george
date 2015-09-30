@@ -10,7 +10,11 @@ george.config(function($stateProvider, $urlRouterProvider) {
         controller: 'HomeController',
         controllerAs: 'home',
         resolve: {
-            data: colleges
+            data: function colleges(RestService) {
+                return RestService.getCollegeList().then(function(response) {
+                    return response.data;
+                });
+            }
         }
     })
     .state('dashboard', {
@@ -27,10 +31,4 @@ george.config(function($stateProvider, $urlRouterProvider) {
             }
         }
     })
-
-    function colleges(RestService) {
-        return RestService.getCollegeList().then(function(response) {
-            return response.data;
-        });
-    }
 });

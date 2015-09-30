@@ -105,7 +105,14 @@ def send_trending():
     handler = route_handlers.TrendingKeyWordHandler()
     return flask.jsonify(data=handler.execute(college, today))
 
+@application.route('/keywordtree')
+def send_keyword_tree():
+    college = flask.request.args.get('college')
+    keyword = flask.request.args.get('keyword')
+    data = route_handlers.KeyWordTreeHandler().execute(college, keyword)
+    return flask.jsonify(data=data)
+
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today += datetime.timedelta(days=-1, minutes=int(offset))
+    today += datetime.timedelta(minutes=int(offset))
     return today
