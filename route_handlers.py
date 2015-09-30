@@ -107,7 +107,7 @@ class DailyActivitySummaryHandler(RouteHandler):
                 'created_utc': {'$gte': today}
         }}
         group = {'$group': {
-            '_id': 'stype',
+            '_id': '$stype',
             'activity': {'$sum': 1},
         }}
         pipeline = [match, group]

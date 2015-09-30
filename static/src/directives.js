@@ -324,7 +324,6 @@ function TrendingPanel() {
             });
         };
         $scope.render(1);
-
     };
 
     directive.link = function($scope, $element, $attrs) {
@@ -347,6 +346,7 @@ function DailyActivityPanel() {
     var directive = {
         scope: {
             activity: '=',
+            college: '='
 
         },
         restrict: 'AE',
@@ -368,6 +368,7 @@ function DailyActivityPanel() {
 function ActivityGraph() {
     var directive = {
         scope: {
+            college: '='
         },
         restrict: 'AE',
         templateUrl: '../templates/activitygraph.html',
@@ -375,12 +376,99 @@ function ActivityGraph() {
     };
 
     directive.controller = function($scope, RestService) {
-
+        $scope.RestService = RestService;
     };
 
     directive.link = function($scope, $element, $attrs) {
+        var MARGIN = {top: 20, right: 20, bottom: 30, left: 40};
+        var WIDTH = $element.width() - MARGIN.left - MARGIN.right;
+        var HEIGHT = 200;
+        var color = d3.scale.ordinal().range(['#4caf50', '#2196f3']);
+        color.domain(['post', 'comment']);
 
+        var xScale = d3.time.scale()
+            .range([MARGIN.left, WIDTH - MARGIN.right - MARGIN.left]);
+;
+        var yScale = d3.scale.linear()
+            .range([HEIGHT - MARGIN.top, MARGIN.bottom]);
+
+        var xAxis = d3.svg.axis()
+            .scale(xScale)
+            .orient("bottom")
+            .tickFormat(d3.time.format("%-I%p"))
+            .ticks(d3.time.hour, 2);
+
+        var yAxis = d3.svg.axis()
+            .scale(yScale)
+            .orient("left")
+            .ticks(5);
+
+        var svg = d3.select('#activity-graph').append("svg")
+            .attr("width", WIDTH + MARGIN.left + MARGIN.right)
+            .attr("height", HEIGHT + MARGIN.top + MARGIN.bottom)
+            .append("g")
+            .attr("transform", "translate(" + MARGIN.left + "," + MARGIN.top + ")");
+
+        $scope.RestService.getActivity($scope.college, 1)
+        .then(function(response) {
+            var dateSet = {};
+            var data = response.data.data.map(function(d) {
+                d.date = toDateObject(d.date);
+                dateSet[d.date.getHours()] = true;
+                var y0 = 0;
+                d.submissions = color.domain().map(function(type) {
+                    return {type: type, y0: y0, y1: y0 += d[type]};
+                });
+                d.total = d.submissions[d.submissions.length - 1].y1;
+                return d;
+            });
+            var totals = data.map(function(d) { return d.total;});
+            var start = d3.time.day.floor(new Date());
+            var stop = d3.time.day.ceil(new Date());
+            d3.time.hour.range(start, stop, d3.time.hour).forEach(function(d) {
+                if (!(d.getHours() in  dateSet)) {
+                    data.push({date: d, submissions: [], total: 0});
+                }
+            });
+
+            data.sort(function(a, b) { return a.date - b.date; });
+
+            var dates = data.map(function(d) { return d.date; });
+            xScale.domain([d3.min(dates), d3.max(dates)]);
+            yScale.domain([0, d3.max(totals)]);
+
+            svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + HEIGHT + ")")
+              .call(xAxis);
+
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+
+            var hour = svg.selectAll(".hour")
+                    .data(data)
+                    .enter().append("g")
+                    .attr("class", "g")
+                    .attr("transform", function(d) {
+                        return "translate(" + xScale(d.date) + ",0)";
+                    });
+
+
+            hour.selectAll("rect")
+                .data(function(d) { return d.submissions; })
+                .enter().append("rect")
+                .attr("width", 15)
+                .attr("y", function(d) { return yScale(d.y1); })
+                .attr("height", function(d) { return yScale(d.y0) - yScale(d.y1); })
+                .style("fill", function(d) { return color(d.type); });
+        });
     };
+
+    function toDateObject(string) {
+        var properFormat = string.split(' ').join('T');
+        return new Date(Date.parse(properFormat));
+    }
 
     return directive;
 }

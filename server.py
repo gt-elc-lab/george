@@ -66,8 +66,7 @@ def send_graph():
 def send_daily_activity_summary():
     college = flask.request.args.get('college')
     offset = flask.request.args.get('offset')
-    today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today += datetime.timedelta(minutes=int(offset))
+    today = get_today_from_offset(offset)
     handler = route_handlers.DailyActivitySummaryHandler()
     return flask.jsonify(handler.execute(college, today))
 
@@ -76,14 +75,14 @@ def send_activity():
     college = flask.request.args.get('college')
     offset = flask.request.args.get('offset')
     lower_bound = flask.request.args.get('days_ago')
-    desired_date = get_today_from_offset(int(offset)) - datetime.timedelta(days=int(lower_bound))
+    desired_date = get_today_from_offset(int(offset))
     handler = route_handlers.ActivityHandler()
     data = handler.execute(college, desired_date)
     buckets = collections.defaultdict(list)
     for item in data:
         date = datetime.datetime(year=item['_id']['year'],
                                  month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
-        date += datetime.timedelta(minutes=int(offset))
+        # date += datetime.timedelta(minutes=int(offset))
         buckets[date].append(item)
     formatted_data = []
     for k, v in buckets.iteritems():
@@ -107,7 +106,6 @@ def send_trending():
     return flask.jsonify(data=handler.execute(college, today))
 
 def get_today_from_offset(offset):
-    today = datetime.datetime.utcnow().replace(hour=0,
-        minute=0, second=0, microsecond=0)
-    today += datetime.timedelta(minutes=int(offset))
+    today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today += datetime.timedelta(days=-1, minutes=int(offset))
     return today

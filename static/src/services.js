@@ -60,7 +60,7 @@ function RestService($http) {
         return $http.get('/trending', {params: params, cache: true});
     };
 
-    service.getActivity = function(college, offset, dayLimit) {
+    service.getActivity = function(college, dayLimit) {
         var params = {
             college: college,
             days_ago: dayLimit,

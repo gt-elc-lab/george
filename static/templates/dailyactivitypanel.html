@@ -1,11 +1,11 @@
 <div class="panel panel-primary">
     <div class="panel-heading">
-        <h3 class="panel-title">Today's Activity</h3>
+        <h3 class="panel-title">Activity</h3>
     </div>
     <div class="panel-body">
         <div class="text-center">
-            <h4> <span class="text-primary"> {{activity.posts}}</span> posts, <span class="text-primary"> {{activity.comments}}</span> comments today</h4>
+            <h4> {{activity.posts}} <span class="text-success">posts </span>, {{activity.comments}} <span class="text-primary">comments</span> today</h4>
         </div>
-        <activity-graph></activity-graph>
+        <activity-graph college="college"></activity-graph>
     </div>
 </div>
