@@ -1,8 +1,17 @@
-import datetime
+import threading
+import logging
 from collections import defaultdict
 from analysis.graph import GraphGenerator
+from analysis.keyword_extractor import KeyWordExtractor
 from collection.dao import MongoDao
 from collection import models
+from datetime import datetime, timedelta
+from Queue import Queue
+
+logging.basicConfig(level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+logger = logging.getLogger(__name__)
 
 
 class RouteHandler(object):
@@ -29,10 +38,10 @@ class TermFreqHandler(RouteHandler):
 
         """
         if not start or not end:
-            end = datetime.datetime.utcnow()
+            end = datetime.utcnow()
             # get rid of the time field
-            end = datetime.datetime(end.year, end.month, end.day)
-            start = end - datetime.timedelta(days=30)
+            end = datetime(end.year, end.month, end.day)
+            start = end - timedelta(days=30)
         post_counts = self.dao.posts_term_frequency(term, colleges, start, end)
         formatted_data = map(self.transform, list(post_counts))
         buckets = defaultdict(list)
@@ -51,7 +60,7 @@ class TermFreqHandler(RouteHandler):
             while period_start <= end:
                 if period_start not in collision_buckets:
                     normalized.append({'total': 0, 'date': period_start, 'college': college})
-                period_start += datetime.timedelta(days=1)
+                period_start += timedelta(days=1)
             # Grab the actual values.
             for v in collision_buckets.itervalues():
                 normalized.append(v)
@@ -69,7 +78,7 @@ class TermFreqHandler(RouteHandler):
         """
         date = '{2}-{1}-{0}'.format(
                 _id['year'], _id['month'], _id['day'])
-        return datetime.datetime.strptime(date, '%d-%m-%Y')
+        return datetime.strptime(date, '%d-%m-%Y')
 
     def transform(self, data):
         """
@@ -87,8 +96,8 @@ class GraphHandler(RouteHandler):
 
     def execute(self, college, start=None, end=None):
         if not start or not end:
-            end = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            start = end - datetime.timedelta(days=3)
+            end = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            start = end - timedelta(days=3)
         query = {'college': college,
                  'keywords': {'$exists': True},
                  'created_utc': {'$gte': start, '$lte': end},
@@ -186,3 +195,57 @@ class ActivityHandler(RouteHandler):
         pipeline = [match, project, group, sort]
         return self.mongo_dao.post_collection.aggregate(pipeline)
 
+
+class MultiThreadedExtraction(object):
+    def __init__(self, colleges):
+        self.colleges = colleges
+    
+    def start(self):
+        q = Queue()
+        for i in range(len(self.colleges)):
+            logger.info('Spawned #{}'.format(i))
+            client = MongoDao()
+            worker = ExtractionWorker(client, q)
+            worker.daemon = True
+            worker.start()
+        for college in self.colleges:
+            logger.info('Queueing {}'.format(college['name']))
+            q.put(college)
+            
+        q.join()
+
+class ExtractionWorker(threading.Thread):
+    def __init__(self, database_client, q, interval=timedelta(days=2)):
+        threading.Thread.__init__(self)
+        self.database_client = database_client
+        self.q = q
+        self.interval = interval
+        return
+    
+    def run(self):
+        while True:
+            college_info = self.q.get()
+            logging.info('Started {}'.format(college_info['name']))
+            start_date = datetime.now()
+            end_date = start_date - timedelta(days=3)
+            self.extract(college_info, start_date, end_date)
+            logger.info('Finished {} from {} to {}'.format(college_info['name'], start_date, end_date))
+            self.q.task_done()
+    
+    def extract(self, college_info, start, end):
+        match = {'$match': {
+            'college' : college_info['name'], 
+            '$or': [
+                {'keywords': {'$exists': False}},
+                {'created_utc': {'$gte': start, '$lte': end}},
+            ]
+        }}
+        pipeline = [match]
+        query_result = self.database_client.post_collection.aggregate(pipeline)
+        documents = map(models.Post.from_record, query_result)
+        corpus = [doc for doc in documents if doc.body]
+        if corpus:
+            keyword_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.body)
+            for index, document in enumerate(corpus):
+                document.keywords = list(keyword_extractor.get_keywords(index))
+                self.database_client.insert(document.to_record())
