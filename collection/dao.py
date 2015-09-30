@@ -16,7 +16,7 @@ class MongoDao(object):
         if mongo_client:
             self.db = mongo_client
         else:
-            if True:
+            if os.environ.get('PROD'):
                 self.db = pymongo.MongoClient()['reddit']
             else:
                 self.db = pymongo.MongoClient(config.TEST_DB_URI)[config.TEST_DB_NAME]
