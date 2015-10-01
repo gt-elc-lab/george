@@ -4,6 +4,7 @@ import json
 import flask
 import datetime
 from collection.dao import MongoDao
+from analysis import suffix_tree
 import route_handlers
 
 if os.environ.get('PROD'):
@@ -111,6 +112,11 @@ def send_keyword_tree():
     keyword = flask.request.args.get('keyword')
     data = route_handlers.KeyWordTreeHandler().execute(college, keyword)
     return flask.jsonify(data=data)
+
+@application.route('/suffixtree')
+def test_tree():
+    return flask.jsonify(data=suffix_tree.main())
+
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
