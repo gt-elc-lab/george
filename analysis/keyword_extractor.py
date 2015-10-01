@@ -9,14 +9,14 @@ from sklearn import feature_extraction
 
 class KeyWordExtractor(object):
 
-    def __init__(self, documents, analyser=None, text_accessor=lambda x: x):
+    def __init__(self, documents, analyser=None, text_accessor=lambda x: x, stop_words_list=None):
         """
         Args:
             documents (list<T>):
             analyser (analysis.TFIDFHelper):
             text_accessor (function): function to get text from document object
         """
-        self.analyser = analyser or TFIDFHelper(get_text=text_accessor)
+        self.analyser = analyser or TFIDFHelper(stopwords=stop_words_list, get_text=text_accessor)
         self.vectors = self.analyser.compute_scores(documents)
 
     def get_keywords(self, document_index, threshold=0.20):
@@ -42,8 +42,7 @@ class TFIDFHelper(object):
             get_text <function>: text accessor function to retrieve strings.
 
         """
-        default_stop_words = nltk.corpus.stopwords.words('english') + get_stop_words('english')
-        self.stopwords = stopwords or set(default_stop_words)
+        self.stopwords = stopwords or set(nltk.corpus.stopwords.words('english') + get_stop_words('english'))
         self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
         self.count_vectorizer = feature_extraction.text.CountVectorizer(
             stop_words=self.stopwords, ngram_range=(1, 1))

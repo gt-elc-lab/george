@@ -1,8 +1,17 @@
-import datetime
+import threading
+import logging
 from collections import defaultdict
 from analysis.graph import GraphGenerator
+from analysis.keyword_extractor import KeyWordExtractor
 from collection.dao import MongoDao
 from collection import models
+from datetime import datetime, timedelta
+from Queue import Queue
+
+logging.basicConfig(level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+logger = logging.getLogger(__name__)
 
 
 class RouteHandler(object):
@@ -29,10 +38,10 @@ class TermFreqHandler(RouteHandler):
 
         """
         if not start or not end:
-            end = datetime.datetime.utcnow()
+            end = datetime.utcnow()
             # get rid of the time field
-            end = datetime.datetime(end.year, end.month, end.day)
-            start = end - datetime.timedelta(days=30)
+            end = datetime(end.year, end.month, end.day)
+            start = end - timedelta(days=30)
         post_counts = self.dao.posts_term_frequency(term, colleges, start, end)
         formatted_data = map(self.transform, list(post_counts))
         buckets = defaultdict(list)
@@ -51,7 +60,7 @@ class TermFreqHandler(RouteHandler):
             while period_start <= end:
                 if period_start not in collision_buckets:
                     normalized.append({'total': 0, 'date': period_start, 'college': college})
-                period_start += datetime.timedelta(days=1)
+                period_start += timedelta(days=1)
             # Grab the actual values.
             for v in collision_buckets.itervalues():
                 normalized.append(v)
@@ -69,7 +78,7 @@ class TermFreqHandler(RouteHandler):
         """
         date = '{2}-{1}-{0}'.format(
                 _id['year'], _id['month'], _id['day'])
-        return datetime.datetime.strptime(date, '%d-%m-%Y')
+        return datetime.strptime(date, '%d-%m-%Y')
 
     def transform(self, data):
         """
@@ -87,8 +96,8 @@ class GraphHandler(RouteHandler):
 
     def execute(self, college, start=None, end=None):
         if not start or not end:
-            end = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            start = end - datetime.timedelta(days=3)
+            end = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            start = end - timedelta(days=3)
         query = {'college': college,
                  'keywords': {'$exists': True},
                  'created_utc': {'$gte': start, '$lte': end},
