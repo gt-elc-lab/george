@@ -69,6 +69,14 @@ function RestService($http) {
 
         return $http.get('/activity', {params: params, cache: true});
     };
+
+    service.getWordTree = function(college, term) {
+        var params = {
+            college: college,
+            term: term
+        };
+        return $http.get('/suffixtree', {params: params});
+    }
     return service;
 }
 
