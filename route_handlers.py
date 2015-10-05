@@ -2,6 +2,7 @@ import threading
 import logging
 from collections import defaultdict
 from analysis.graph import GraphGenerator
+from analysis.suffix_tree import SuffixTree
 from analysis.keyword_extractor import KeyWordExtractor
 from collection.dao import MongoDao
 from collection import models
@@ -211,3 +212,17 @@ class KeyWordTreeHandler(RouteHandler):
             'name': keyword,
             'children': filter(lambda x: x['name'] != keyword, formatted_output)
         }
+
+class WordTreeHandler(RouteHandler):
+
+    def execute(self, college, term):
+        last_week = datetime.utcnow() - timedelta(days=30)
+        query = {'college': college,
+                '$text': {'$search': term},
+                'created_utc': {'$gte': last_week}}
+        query_result = self.mongo_dao.post_collection.find(query)
+        cleaned_text = SuffixTree.clean(term, [doc['body'] for doc in query_result])
+        tree = SuffixTree(term)
+        for sent in cleaned_text:
+            tree.insert(sent)
+        return tree.to_json()

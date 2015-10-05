@@ -1,3 +1,5 @@
+
+from nltk import tokenize
 from collections import deque
 
 class SuffixTree(object):
@@ -10,6 +12,7 @@ class SuffixTree(object):
         self._traverse(self.root, q)
 
     def _traverse(self, node, q):
+        node.total += 1
         if not q:
             return
         term = q.popleft()
@@ -17,23 +20,30 @@ class SuffixTree(object):
             self._traverse(node, q)
             return
         if term not in node.children:
-            new_node = Node(term)
-            node.add_child(new_node)
-            self._traverse(new_node, q)
+            child = Node(term)
+            node.add_child(child)
+            self._traverse(child, q)
         else:
             self._traverse(node.get_child(term), q)
 
     def to_json(self):
+        self.root.collapse()
         return self.root.to_json()
 
-    def join_long_leaves(self):
-        return
+    @staticmethod
+    def clean(term, documents):
+        tokenized_sents = [tokenize.word_tokenize(sentence)
+                           for document in documents
+                           for sentence in tokenize.sent_tokenize(document.lower())]
+        contain_term = [sent for sent in tokenized_sents if term in sent]
+        return [sent[sent.index(term):] for sent in contain_term]
 
 class Node(object):
 
     def __init__(self, term):
         self.term = term
         self.children = {}
+        self.total = 0
 
     def add_child(self, new_node):
         self.children[new_node.term] = new_node
@@ -46,10 +56,22 @@ class Node(object):
         return len(self.children)
 
     def to_json(self):
-        as_json = {'name': self.term}
+        as_json = {'name': self.term, 'total': self.total}
         if self.children:
             as_json['children'] = [child.to_json() for child in self.children.itervalues()]
         return as_json
+
+    def collapse(self):
+        if len(self.children) == 1:
+            child = list(self.children.itervalues())[0]
+            self.term = self.term + ' ' + child.term
+            self.children.update(child.children)
+            self.children.pop(child.term)
+            self.collapse()
+        for child in self.children.itervalues():
+            child.collapse()
+        return
+
 
     def __repr__(self):
         return '<Node %s>' % self.term

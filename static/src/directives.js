@@ -496,10 +496,10 @@ function WordTree() {
         var height = 900;
 
         var cluster = d3.layout.cluster()
-            .size([height, width / 2])
-            .separation(function (a, b) {
-              return (a.parent == b.parent ? 1 : 2) / a.depth;
-            });
+            .size([height, width / 2]);
+            // .separation(function (a, b) {
+            //   return (a.parent == b.parent ? 1 : 2) / a.depth;
+            // });
 
         var diagonal = d3.svg.diagonal()
             .projection(function(d) { return [d.y, d.x]; });
