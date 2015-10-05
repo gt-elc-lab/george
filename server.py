@@ -83,7 +83,7 @@ def send_activity():
     for item in data:
         date = datetime.datetime(year=item['_id']['year'],
                                  month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
-        # date += datetime.timedelta(minutes=int(offset))
+        date -= datetime.timedelta(minutes=int(offset))
         buckets[date].append(item)
     formatted_data = []
     for k, v in buckets.iteritems():
@@ -114,11 +114,14 @@ def send_keyword_tree():
     return flask.jsonify(data=data)
 
 @application.route('/suffixtree')
-def test_tree():
-    return flask.jsonify(data=suffix_tree.main())
+def send_suffix_tree():
+    college = flask.request.args.get('college')
+    term = flask.request.args.get('term')
+    handler = route_handlers.WordTreeHandler()
+    return flask.jsonify(data=handler.execute(college, term.lower()))
 
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today += datetime.timedelta(minutes=int(offset))
+    today -= datetime.timedelta(minutes=int(offset))
     return today
