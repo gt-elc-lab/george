@@ -201,13 +201,12 @@ class KeyWordTreeHandler(RouteHandler):
     def execute(self, college, keyword):
         match = {'$match': {'college': college, 'keywords': keyword}}
         project = {'$unwind': '$keywords'}
-        group = {'$group': {'_id': '$keywords', 'size': {'$sum': 1}}}
-        sort = {'$sort': {'size': -1}}
+        group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
+        sort = {'$sort': {'total': -1}}
         limit = {'$limit': 10}
         pipeline = [match, project, group, sort, limit]
         query_result = self.mongo_dao.post_collection.aggregate(pipeline)
-        formatted_output = map(lambda x: {'name': x['_id'], 'size': x['size']}, query_result)
-
+        formatted_output = map(lambda x: {'name': x['_id'], 'total': x['total']}, query_result)
         return {
             'name': keyword,
             'children': filter(lambda x: x['name'] != keyword, formatted_output)
@@ -216,7 +215,7 @@ class KeyWordTreeHandler(RouteHandler):
 class WordTreeHandler(RouteHandler):
 
     def execute(self, college, term):
-        last_week = datetime.utcnow() - timedelta(days=30)
+        last_week = datetime.utcnow() - timedelta(days=90)
         query = {'college': college,
                 '$text': {'$search': term},
                 'created_utc': {'$gte': last_week}}

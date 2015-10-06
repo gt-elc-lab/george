@@ -10,7 +10,10 @@
                 <span class="icon-bar"></span>
                 </button>
                 <a class="navbar-brand" ui-sref="home()"><span class="text-warning"> George </span></a>
-                <a class="navbar-brand" ui-sref="home()">{{dashboard.vm.college}}</a>
+                <a class="navbar-brand" ui-sref="dashboard.summary({college: dashboard.vm.college})">{{dashboard.vm.college}}</a>
+                <a ng-if="dashboard.vm.keyword"class="navbar-brand">
+                    <span class="text-primary">{{dashboard.vm.keyword}}</span>
+                </a>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
                 <ul class="nav navbar-nav navbar-right">
@@ -19,16 +22,5 @@
             </div>
         </div>
     </nav>
-    <!-- End Navbar -->
-    <div class="col-md-12">
-        <div class="row">
-            <div class="col-md-9">
-                <daily-activity-panel college="dashboard.vm.college" activity="dashboard.vm.activity"></daily-activity-panel>
-                <word-tree college="dashboard.vm.college"></word-tree>
-            </div>
-            <div class="col-md-3">
-                <trending-panel college="dashboard.vm.college"></trending-panel>
-            </div>
-        </div>
-    </div>
+    <div ui-view></div>
 </div>

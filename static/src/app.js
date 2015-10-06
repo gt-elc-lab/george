@@ -18,10 +18,16 @@ george.config(function($stateProvider, $urlRouterProvider) {
         }
     })
     .state('dashboard', {
-        url: '/dashboard/:college',
+        url: '/:college/dashboard',
         templateUrl: '../views/dashboard.html',
         controller: 'DashboardController',
         controllerAs: 'dashboard',
+    })
+    .state('dashboard.summary', {
+        url: '/summary',
+        templateUrl: '../views/summary.html',
+        controller: 'SummaryController',
+        controllerAs: 'summary',
         resolve: {
             activity: function(RestService, $stateParams) {
                 return RestService.getTodaysActivitySummary($stateParams.college)
@@ -31,4 +37,11 @@ george.config(function($stateProvider, $urlRouterProvider) {
             }
         }
     })
+    .state('dashboard.keyword', {
+        url: '/keyword/:keyword',
+        templateUrl: '../views/keyword.html',
+        controller: 'KeywordController',
+        controllerAs: 'keyword',
+        resolve: {}
+    });
 });

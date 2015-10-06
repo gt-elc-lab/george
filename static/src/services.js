@@ -77,6 +77,14 @@ function RestService($http) {
         };
         return $http.get('/suffixtree', {params: params});
     }
+
+    service.getCoKeywords = function(college, keyword) {
+        var params = {
+            college: college,
+            keyword: keyword
+        };
+        return $http.get('/cokeywords', {params: params});
+    }
     return service;
 }
 

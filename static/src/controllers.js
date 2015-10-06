@@ -4,16 +4,34 @@ var george = angular.module('george');
 george.controller('HomeController', HomeController);
 george.controller('WordSearchController', WordSearchController);
 george.controller('TrendingController', TrendingController);
-george.controller('DashboardController', DashboardController)
+george.controller('SummaryController', SummaryController);
+george.controller('DashboardController', DashboardController);
+george.controller('KeywordController', KeywordController);
+
 
 function HomeController(data) {
     this.colleges = data.colleges;
 }
 
-function DashboardController($stateParams, activity) {
+function SummaryController($stateParams, activity) {
     this.vm = {}
     this.vm.college = $stateParams.college;
     this.vm.activity = activity;
+}
+
+function DashboardController($scope, $stateParams) {
+    this.vm = {}
+    this.vm.college = $stateParams.college;
+
+    $scope.$on('$stateChangeSuccess',
+        function(event, toState, toParams, fromState, fromParams) {
+        if (toParams.keyword) {
+            this.vm.keyword = toParams.keyword;
+        }
+        if (toState.name == 'dashboard.summary') {
+            this.vm.keyword = null;
+        }
+    }.bind(this));
 }
 
 function WordSearchController($scope, RestService, data) {
@@ -53,4 +71,10 @@ function TrendingController($scope, RestService, data) {
         console.log(this.selectedCollege);
         $scope.$broadcast('trending-graph', {college: this.selectedCollege});
     };
+}
+
+function KeywordController($stateParams) {
+    this.vm = {};
+    this.vm.college = $stateParams.college;
+    this.vm.keyword = $stateParams.keyword;
 }

@@ -8,6 +8,8 @@ george.directive('trendingPanel', ['RestService', TrendingPanel]);
 george.directive('dailyActivityPanel', ['RestService', DailyActivityPanel]);
 george.directive('activityGraph', ['RestService', ActivityGraph]);
 george.directive('wordTree', ['RestService', WordTree]);
+george.directive('cokeywordsGraph', ['RestService', CokeywordsGraph]);
+
 
 
 function DropdownMultiselect() {
@@ -389,7 +391,7 @@ function ActivityGraph() {
 
         var xScale = d3.time.scale()
             .range([MARGIN.left, WIDTH - MARGIN.right - MARGIN.left]);
-;
+
         var yScale = d3.scale.linear()
             .range([HEIGHT - MARGIN.top, MARGIN.bottom]);
 
@@ -496,10 +498,10 @@ function WordTree() {
         var height = 900;
 
         var cluster = d3.layout.cluster()
-            .size([height, width / 2]);
-            // .separation(function (a, b) {
-            //   return (a.parent == b.parent ? 1 : 2) / a.depth;
-            // });
+            .size([height, width / 2])
+            .separation(function (a, b) {
+              return (a.parent == b.parent ? 1 : 2) / a.depth;
+            });
 
         var diagonal = d3.svg.diagonal()
             .projection(function(d) { return [d.y, d.x]; });
@@ -559,4 +561,107 @@ function WordTree() {
     };
 
     return directive;
+}
+
+function CokeywordsGraph() {
+  var directive = {
+    scope: {
+      college: '=',
+      keyword: '='
+    },
+    restrict: 'AE',
+    replace: true,
+    templateUrl: '../../templates/cokeywordsgraph.html'
+  };
+
+  directive.controller = function($scope, RestService, $state) {
+    $scope.RestService = RestService;
+    $scope.$state = $state;
+  };
+
+  directive.link = function($scope, $element, $attrs) {
+    $scope.RestService.getCoKeywords($scope.college, $scope.keyword)
+        .then(function(response) {
+        var root = response.data.data;
+        root.total = root.children.length;
+        var width = $element.width();
+        var height = 400;
+
+        var cluster = d3.layout.cluster()
+            .size([height, width / 2])
+            .separation(function (a, b) {
+              return (a.parent == b.parent ? 1 : 2) / a.depth;
+            });
+
+        var diagonal = d3.svg.diagonal()
+            .projection(function(d) { return [d.y, d.x]; });
+
+        var totals = root.children.map(function(d) {
+          return d.total;
+        });
+        var xScale = d3.scale.linear()
+                        .domain([0, d3.max(totals)])
+                        .range([0, 1])
+                        .clamp(true);
+
+        var svg = d3.select('#cokeywords-tree').append('svg')
+            .attr('width', width)
+            .attr('height', height)
+          .append('g')
+            .attr('transform', 'translate(80,0)');
+
+
+        var nodes = cluster.nodes(root);
+        var links = cluster.links(nodes);
+
+        var link = svg.selectAll('.link')
+            .data(links)
+          .enter().append('path')
+            .attr('class', 'link')
+            .attr('d', diagonal)
+            .attr('stroke-width', function(d) {
+                    return xScale(d.target.total) * 15 + 'px';
+            })
+            .on('mouseover', function(d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(250)
+                        .attr('stroke', '#ff9800');
+            })
+            .on('mouseleave', function(d) {
+                    d3.select(this)
+                        .transition()
+                        .duration(250)
+                        .attr('stroke', '#2196f3');
+            });
+
+        var node = svg.selectAll('.node')
+            .data(nodes)
+          .enter().append('g')
+            .attr('class', 'node')
+            .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; })
+
+        node.append('circle')
+            .attr('r', function(d) {
+              return xScale(d.total) * 12 + 'px';
+            });
+
+        node.append('text')
+            .attr('dx', function(d) { return d.children ? -15 : 15; })
+            .attr('dy', 3)
+            .attr('font-size', function(d) {
+                return xScale(d.total) * 15 + 'px';
+            })
+            .style('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
+            .text(function(d) { return d.name; })
+            .on('click', function(d) {
+              $scope.$state.go('dashboard.keyword', {keyword: d.keyword});
+            });
+    });
+
+    function strokeWidth(scale, d) {
+        return xScale(d.target.total) * 15 + 'px';
+    }
+  };
+  return directive;
 }

@@ -75,7 +75,6 @@ def send_daily_activity_summary():
 def send_activity():
     college = flask.request.args.get('college')
     offset = flask.request.args.get('offset')
-    lower_bound = flask.request.args.get('days_ago')
     desired_date = get_today_from_offset(int(offset))
     handler = route_handlers.ActivityHandler()
     data = handler.execute(college, desired_date)
@@ -83,7 +82,7 @@ def send_activity():
     for item in data:
         date = datetime.datetime(year=item['_id']['year'],
                                  month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
-        date -= datetime.timedelta(minutes=int(offset))
+        # date -= datetime.timedelta(minutes=int(offset))
         buckets[date].append(item)
     formatted_data = []
     for k, v in buckets.iteritems():
@@ -106,7 +105,7 @@ def send_trending():
     handler = route_handlers.TrendingKeyWordHandler()
     return flask.jsonify(data=handler.execute(college, today))
 
-@application.route('/keywordtree')
+@application.route('/cokeywords')
 def send_keyword_tree():
     college = flask.request.args.get('college')
     keyword = flask.request.args.get('keyword')
