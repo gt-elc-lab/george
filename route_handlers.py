@@ -1,5 +1,6 @@
 import threading
 import logging
+import pymongo
 from collections import defaultdict
 from analysis.graph import GraphGenerator
 from analysis.suffix_tree import SuffixTree
@@ -225,3 +226,42 @@ class WordTreeHandler(RouteHandler):
         for sent in cleaned_text:
             tree.insert(sent)
         return tree.to_json()
+
+class KeywordSubmissionHandler(RouteHandler):
+
+    def execute(self, college, keyword, page=1):
+        query = {'college': college,
+                 'keywords': keyword}
+        query_result = self.mongo_dao.post_collection.find(query).sort('created_utc', pymongo.ASCENDING).limit(10).skip((page - 1) * 10)
+        return [models.Post.from_record(doc).to_json() for doc in query_result]
+
+class KeywordActivityHandler(RouteHandler):
+
+    def execute(self, keyword, college):
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago.replace(hour=0, minute=0, second=0)
+        match = {'$match': {'college': college,
+                            'keywords': keyword,
+                            'created_utc': {'$gte': week_ago}}}
+        project = {'$project': {
+                'y': {'$year': '$created_utc'},
+                'm': {'$month': '$created_utc'},
+                'd': {'$dayOfMonth': '$created_utc'},
+                'h': {'$hour': '$created_utc'}
+        }}
+        group = {'$group': {
+         '_id': {
+             'year': '$y',
+             'month': '$m',
+             'day': '$d',
+         },
+        'total': {'$sum': 1},
+         }}
+        sort = {'$sort':{
+             '_id.year': -1,
+             '_id.month': -1,
+             '_id.day' : -1,
+             }}
+        pipeline = [match, project, group, sort]
+        result = list(self.mongo_dao.post_collection.aggregate(pipeline))
+        return list(result)

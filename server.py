@@ -1,10 +1,8 @@
 import collections
 import os
-import json
 import flask
 import datetime
 from collection.dao import MongoDao
-from analysis import suffix_tree
 import route_handlers
 
 if os.environ.get('PROD'):
@@ -35,6 +33,12 @@ def send_comments(post_id):
 	comments = [comment_model.to_json()
 				for comment_model in dao.get_post_comments(str(post_id))]
 	return flask.jsonify({'comments': comments})
+
+@application.route('/submissions/keyword/<keyword>/<int:page>')
+def send_submissions_by_keyword(keyword, page):
+    college = flask.request.args.get('college')
+    handler = route_handlers.KeywordSubmissionHandler()
+    return flask.jsonify(data=handler.execute(college, keyword, page))
 
 @application.route('/todays_posts')
 def send_todays_posts():
@@ -82,7 +86,7 @@ def send_activity():
     for item in data:
         date = datetime.datetime(year=item['_id']['year'],
                                  month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
-        # date -= datetime.timedelta(minutes=int(offset))
+        date += datetime.timedelta(minutes=int(offset))
         buckets[date].append(item)
     formatted_data = []
     for k, v in buckets.iteritems():
@@ -119,8 +123,13 @@ def send_suffix_tree():
     handler = route_handlers.WordTreeHandler()
     return flask.jsonify(data=handler.execute(college, term.lower()))
 
+@application.route('/keyword/activity/<keyword>')
+def send_keyword_activity(keyword):
+    college = flask.request.args.get('college')
+    handler = route_handlers.KeywordActivityHandler()
+    return flask.json.dumps(handler.execute(keyword, college))
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today -= datetime.timedelta(minutes=int(offset))
+    today += datetime.timedelta(minutes=int(offset))
     return today

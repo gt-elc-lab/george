@@ -32,9 +32,9 @@ class ExtractionTask(Task):
     @staticmethod
     def execute():
         mongo_dao = MongoDao()
-        start = datetime.datetime.utcnow()- datetime.timedelta(days=1)
+        start = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         match = {'$match': {
-            '$or': [
+            '$and': [
                 {'keywords': {'$exists': False}},
                 {'created_utc': {'$gte': start}},
             ]
