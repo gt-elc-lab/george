@@ -34,10 +34,7 @@ class ExtractionTask(Task):
         mongo_dao = MongoDao()
         start = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         match = {'$match': {
-            '$and': [
-                {'keywords': {'$exists': False}},
-                {'created_utc': {'$gte': start}},
-            ]
+                'created_utc': {'$gte': start},
         }}
         group = {'$group': {
             '_id': '$college',

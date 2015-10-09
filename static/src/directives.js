@@ -206,7 +206,9 @@ function TimeSeriesGraph() {
 
 function TrendingGraph() {
     var directive = {
-        scope: {},
+        scope: {
+            college: '='
+        },
         restrict: 'AE',
         templateUrl: '../templates/trendinggraph.html',
         replace: true
@@ -218,49 +220,75 @@ function TrendingGraph() {
 
     directive.link = function($scope, $element, $attr) {
         var w = 900;
-        var h = 500;
+        var h = 600;
         var svg = d3.select('#force-layout-graph').append('svg')
                     .attr('width', w)
                     .attr('height', h);
-        $scope.$on('trending-graph', function(e, args) {
-            $scope.restService.getTrendingGraph(args.college)
+        $scope.restService.getTrendingGraph($scope.college)
             .success(function(data) {
-                svg.selectAll("*").remove();
-                    var force = d3.layout.force()
-                                    .nodes(data.nodes)
-                                    .links(data.edges)
-                                    .size([w, h])
-                                    .start();
+            svg.selectAll("*").remove();
+                var force = d3.layout.force()
+                                .nodes(data.nodes)
+                                .links(data.edges)
+                                .size([w, h])
+                                .start();
 
-                        var edges = svg.selectAll('line')
-                                        .data(data.edges)
-                                        .enter()
-                                        .append('line')
-                                        .style('stroke','#ccc')
-                                        .style('stroke-width', 1)
-                                        .attr("x1", function(d) { return d.source.x; })
-                                        .attr("y1", function(d) { return d.source.y; })
-                                        .attr("x2", function(d) { return d.target.x; })
-                                        .attr("y2", function(d) { return d.target.y; });
+                    var edges = svg.selectAll('line')
+                                    .data(data.edges)
+                                    .enter()
+                                    .append('line')
+                                    .style('stroke','#ccc')
+                                    .style('stroke-width', 1)
+                                    .attr("x1", function(d) { return d.source.x; })
+                                    .attr("y1", function(d) { return d.source.y; })
+                                    .attr("x2", function(d) { return d.target.x; })
+                                    .attr("y2", function(d) { return d.target.y; });
 
-                        var color = {POST: 'blue', COMMENT: 'red'};
-                        var nodes = svg.selectAll('circle')
-                                        .data(data.nodes)
-                                        .enter()
-                                        .append('circle')
-                                        .attr('r', 6)
-                                        .style('fill', function(d) {return color[d.type];})
-                                        .attr("cx", function(d) { return d.x; })
-                                        .attr("cy", function(d) { return d.y; });
+                    var color = {POST: 'blue', COMMENT: 'red'};
+                    var nodes = svg.selectAll('circle')
+                                    .data(data.nodes)
+                                    .enter()
+                                    .append('circle')
+                                    .attr('r', 3)
+                                    .style('fill', function(d) {return color[d.type];})
+                                    .attr("cx", function(d) { return d.x; })
+                                    .attr("cy", function(d) { return d.y; });
 
-                        nodes.on('click', function(d) {
-                            $scope.current = d;
-                            $scope.$apply();
-                        });
-            })
-            .error(function(error) {
+                    force.on('tick', function() {
+                        edges.attr("x1", function(d) { return d.source.x; })
+                                .attr("y1", function(d) { return d.source.y; })
+                                .attr("x2", function(d) { return d.target.x; })
+                                .attr("y2", function(d) { return d.target.y; });
 
-            });
+                        nodes.attr("cx", function(d) { return d.x; })
+                            .attr("cy", function(d) { return d.y; });
+                    });
+
+                    force.on('end', function() {
+                        var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
+                        var frequencies = keywordPoints.map(function(d) {return d.frequency});
+                        var scale = d3.scale.linear()
+                                    .domain([1, d3.max(frequencies)])
+                                    .range([0, 25])
+                                    .clamp(true);
+                        var keywords = svg.selectAll('text')
+                            .data(keywordPoints)
+                            .enter()
+                            .append('text')
+                            .attr('x', function(d) { return d.getX();})
+                            .attr('y', function(d) { return d.getY();})
+                            .attr('fill', 'blue')
+                            .attr('font-size', function(d) {return scale(d.frequency) + 'px';})
+                            .text(function(d) {return d.term;});
+                    });
+
+                    nodes.on('click', function(d) {
+                        $scope.current = d;
+                        $scope.$apply();
+                    });
+        })
+        .error(function(error) {
+
         });
     };
 
@@ -296,8 +324,6 @@ function TrendingGraph() {
 
         return Object.keys(counter).map(function(i) {
             return counter[i];
-        }).filter(function(i) {
-            return i.frequency > 1;
         });
     }
 
@@ -655,13 +681,9 @@ function CokeywordsGraph() {
             .style('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
             .text(function(d) { return d.name; })
             .on('click', function(d) {
-              $scope.$state.go('dashboard.keyword', {keyword: d.keyword});
+              $scope.$state.go('dashboard.keyword', {keyword: d.name});
             });
     });
-
-    function strokeWidth(scale, d) {
-        return xScale(d.target.total) * 15 + 'px';
-    }
   };
   return directive;
 }

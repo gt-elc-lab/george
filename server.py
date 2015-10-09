@@ -62,8 +62,8 @@ def send_frequency_data():
     data = handler.execute(term, colleges, start, end)
     return flask.jsonify({'data': data})
 
-def send_graph():
-    college = flask.request.args.get('college')
+@application.route('/trendinggraph/<college>')
+def send_graph(college):
     handler = route_handlers.GraphHandler()
     return flask.jsonify(handler.execute(college))
 

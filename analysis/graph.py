@@ -1,11 +1,13 @@
 import keyword_extractor
+from scipy.stats.stats import pearsonr
+
 class GraphGenerator(object):
 
     def __init__(self):
         return
 
     @staticmethod
-    def cosine_similarity(documents, threshold=0.15):
+    def cosine_similarity(documents, threshold=0.2):
         tf = keyword_extractor.TFIDFHelper(get_text=lambda x: x.body)
         vectors = tf.perform_tfidf(documents)
         index_lookup = {doc._id: i for i, doc in enumerate(documents)}
@@ -15,8 +17,9 @@ class GraphGenerator(object):
                 if i == j:
                     continue
                 else:
-                    angle = v.dot(k)
-                    if angle >= threshold:
+                    coeff = pearsonr(v, k)[0]
+                    # angle = pearsonr(v, k)
+                    if abs(coeff) >= threshold:
                         doc = documents[i]
                         other = documents[j]
                         a = set(doc.keywords)
