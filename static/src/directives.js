@@ -245,12 +245,13 @@ function TrendingGraph() {
                                     .attr("y2", function(d) { return d.target.y; });
 
                     var color = {POST: 'blue', COMMENT: 'red'};
+                    var colorScale = d3.scale.category20();
                     var nodes = svg.selectAll('circle')
                                     .data(data.nodes)
                                     .enter()
                                     .append('circle')
                                     .attr('r', 3)
-                                    .style('fill', function(d) {return color[d.type];})
+                                    .style('fill', function(d) {return colorScale(d.partition)})
                                     .attr("cx", function(d) { return d.x; })
                                     .attr("cy", function(d) { return d.y; });
 

@@ -1,4 +1,3 @@
-import flask
 
 class Post(object):
 

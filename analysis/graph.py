@@ -1,5 +1,9 @@
 import keyword_extractor
+import networkx as nx
+import community
+from networkx.readwrite import json_graph
 from scipy.stats.stats import pearsonr
+
 
 class GraphGenerator(object):
 
@@ -30,7 +34,8 @@ class GraphGenerator(object):
                                     'weight': len(intersection)
                                 }
                         edges.append(edge)
-        return edges
+        documents = [doc.to_json() for doc in documents]
+        return {'nodes': documents, 'edges': edges}
 
 
     @staticmethod
@@ -42,13 +47,37 @@ class GraphGenerator(object):
                 a = set(doc.keywords)
                 b = set(other.keywords)
                 intersection = a.intersection(b)
-                if len(intersection) > threshold:
+                if len(intersection) >= threshold:
                      edge = {'source': index_lookup[doc._id],
                              'target': index_lookup[other._id],
                              'weight': len(intersection)
                                 }
                      edges.append(edge)
-        return edges
+        documents = [doc.to_json() for doc in documents]
+        return {'nodes': documents, 'edges': edges}
+
+    @staticmethod
+    def _with_networkx(documents, threshold=1):
+        G = nx.Graph()
+        G.add_nodes_from(documents)
+        nodes = G.nodes()
+        for i, node in enumerate(nodes):
+            for other in nodes[i:]:
+                a = set(node.keywords)
+                b = set(other.keywords)
+                intersection = a.intersection(b)
+                if len(intersection) > threshold:
+                    G.add_edge(node, other)
+        partition_lookup = community.best_partition(G).iteritems()
+        partitions = {node._id: value for node, value in partition_lookup}
+        as_json = json_graph.node_link_data(G)
+        frontend_compatable = {}
+        frontend_compatable['nodes'] = [node['id'] for node in as_json['nodes']]
+        for node in frontend_compatable['nodes']:
+            node.partition = partitions[node._id]
+        frontend_compatable['nodes'] = [node.to_json() for node in frontend_compatable['nodes']]
+        frontend_compatable['edges'] = as_json['links']
+        return frontend_compatable
 
 
 
