@@ -219,74 +219,95 @@ function TrendingGraph() {
     };
 
     directive.link = function($scope, $element, $attr) {
-        var w = 900;
-        var h = 600;
+        var w = 800;
+        var h = 700;
         var svg = d3.select('#force-layout-graph').append('svg')
                     .attr('width', w)
                     .attr('height', h);
         $scope.restService.getTrendingGraph($scope.college)
             .success(function(data) {
             svg.selectAll("*").remove();
+                var linkScale = d3.scale.linear()
+                                    .domain([1, d3.max(data.edges.map(function(d) {
+                                        return d.weight;
+                                    }))])
+                                    .range([1, 0]);
+
                 var force = d3.layout.force()
                                 .nodes(data.nodes)
                                 .links(data.edges)
                                 .size([w, h])
+                                .charge(-120)
+                                .linkDistance(50)
+                                .linkStrength(function(edge) {
+                                    var val = linkScale(edge.weight);
+                                    console.log(val, edge.weight);
+                                    return val;
+                                })
                                 .start();
 
-                    var edges = svg.selectAll('line')
-                                    .data(data.edges)
-                                    .enter()
-                                    .append('line')
-                                    .style('stroke','#ccc')
-                                    .style('stroke-width', 1)
-                                    .attr("x1", function(d) { return d.source.x; })
-                                    .attr("y1", function(d) { return d.source.y; })
-                                    .attr("x2", function(d) { return d.target.x; })
-                                    .attr("y2", function(d) { return d.target.y; });
-
-                    var color = {POST: 'blue', COMMENT: 'red'};
-                    var colorScale = d3.scale.category20();
-                    var nodes = svg.selectAll('circle')
-                                    .data(data.nodes)
-                                    .enter()
-                                    .append('circle')
-                                    .attr('r', 3)
-                                    .style('fill', function(d) {return colorScale(d.partition)})
-                                    .attr("cx", function(d) { return d.x; })
-                                    .attr("cy", function(d) { return d.y; });
-
-                    force.on('tick', function() {
-                        edges.attr("x1", function(d) { return d.source.x; })
+                var edges = svg.selectAll('line')
+                                .data(data.edges)
+                                .enter()
+                                .append('line')
+                                .style('stroke','#ccc')
+                                .style('stroke-width', 1)
+                                .attr("x1", function(d) { return d.source.x; })
                                 .attr("y1", function(d) { return d.source.y; })
                                 .attr("x2", function(d) { return d.target.x; })
                                 .attr("y2", function(d) { return d.target.y; });
 
-                        nodes.attr("cx", function(d) { return d.x; })
-                            .attr("cy", function(d) { return d.y; });
-                    });
+                var color = {POST: 'blue', COMMENT: 'red'};
+                var colorScale = d3.scale.category10();
+                var nodes = svg.selectAll('circle')
+                                .data(data.nodes)
+                                .enter()
+                                .append('circle')
+                                .attr('r', 15)
+                                .style('fill', function(d) {
+                                    if (d.partition) {
+                                        return colorScale(d.partition);
+                                    }
+                                    return 'black';
+                                })
+                                .attr("cx", function(d) { return d.x; })
+                                .attr("cy", function(d) { return d.y; });
 
-                    force.on('end', function() {
-                        var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
-                        var frequencies = keywordPoints.map(function(d) {return d.frequency});
-                        var scale = d3.scale.linear()
-                                    .domain([1, d3.max(frequencies)])
-                                    .range([0, 25])
-                                    .clamp(true);
-                        var keywords = svg.selectAll('text')
-                            .data(keywordPoints)
-                            .enter()
-                            .append('text')
-                            .attr('x', function(d) { return d.getX();})
-                            .attr('y', function(d) { return d.getY();})
-                            .attr('fill', 'blue')
-                            .attr('font-size', function(d) {return scale(d.frequency) + 'px';})
-                            .text(function(d) {return d.term;});
-                    });
+                force.on('tick', function() {
+                    edges.attr("x1", function(d) { return d.source.x; })
+                            .attr("y1", function(d) { return d.source.y; })
+                            .attr("x2", function(d) { return d.target.x; })
+                            .attr("y2", function(d) { return d.target.y; });
 
-                    nodes.on('click', function(d) {
-                        $scope.current = d;
-                        $scope.$apply();
-                    });
+                    nodes.attr("cx", function(d) { return d.x; })
+                        .attr("cy", function(d) { return d.y; });
+                });
+
+                force.on('end', function() {
+                    var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
+                    var frequencies = keywordPoints.map(function(d) {return d.frequency});
+                    var scale = d3.scale.linear()
+                                .domain([1, d3.max(frequencies)])
+                                .range([0, 40])
+                                .clamp(true);
+                    var keywords = svg.selectAll('g')
+                        .data(keywordPoints)
+                        .enter()
+                        .append('g')
+                        .append('text')
+                        .attr('x', function(d) { return d.getX();})
+                        .attr('y', function(d) { return d.getY();})
+                        .attr('fill', 'blue')
+                        .style('margin', '1px')
+                        .attr('font-size', function(d) {return scale(d.frequency) + 'px';})
+                        .text(function(d) {return d.term;});
+                });
+
+                nodes.on('click', function(d) {
+                    $scope.current = d;
+                    console.log(d);
+                    $scope.$apply();
+                });
         })
         .error(function(error) {
 

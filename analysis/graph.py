@@ -62,19 +62,21 @@ class GraphGenerator(object):
         G.add_nodes_from(documents)
         nodes = G.nodes()
         for i, node in enumerate(nodes):
-            for other in nodes[i:]:
+            for other in nodes[i+1:]:
                 a = set(node.keywords)
                 b = set(other.keywords)
                 intersection = a.intersection(b)
                 if len(intersection) > threshold:
                     G.add_edge(node, other)
+                    G[node][other]['weight'] = len(intersection)
         partition_lookup = community.best_partition(G).iteritems()
         partitions = {node._id: value for node, value in partition_lookup}
         as_json = json_graph.node_link_data(G)
         frontend_compatable = {}
         frontend_compatable['nodes'] = [node['id'] for node in as_json['nodes']]
         for node in frontend_compatable['nodes']:
-            node.partition = partitions[node._id]
+            if G.neighbors(node):
+                node.partition = partitions[node._id]
         frontend_compatable['nodes'] = [node.to_json() for node in frontend_compatable['nodes']]
         frontend_compatable['edges'] = as_json['links']
         return frontend_compatable

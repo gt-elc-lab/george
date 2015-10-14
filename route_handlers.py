@@ -98,11 +98,10 @@ class GraphHandler(RouteHandler):
 
     def execute(self, college, start=None, end=None):
         if not start or not end:
-            end = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-            start = end - timedelta(days=1)
+           start = datetime.utcnow() - timedelta(days=1)
         query = {'college': college,
                  'keywords': {'$exists': True},
-                 'created_utc': {'$gte': start, '$lte': end},
+                 'created_utc': {'$gte': start},
             }
         documents = map(models.Post.from_record, self.mongo_dao.post_collection.find(query))
         if documents:
