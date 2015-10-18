@@ -6,6 +6,7 @@ import string
 import pymongo
 from nltk.stem.porter import PorterStemmer
 from sklearn import feature_extraction
+from sklearn.cluster import KMeans
 
 class KeyWordExtractor(object):
 
@@ -97,6 +98,11 @@ class TFIDFHelper(object):
         Returns:
             [[(term, score).....] for each document]
         """
+        pos_tag = POSTagger()
+        new_documents = []
+        for document in documents:
+            new_documents = new_documents + pos_tag.perform_pos_tagging(self.get_text(document), ("NN", "VB", "JJ", "RB"))
+        
         tfidf_vectors = self.perform_tfidf(documents)
         document_terms = []
         for document in tfidf_vectors:
@@ -107,3 +113,22 @@ class TFIDFHelper(object):
             document_terms.append(terms)
         return document_terms
 
+
+class POSTagger(object):
+    """ Performs POS tagging against a given document"""
+    
+    def __init__(self):
+        return
+
+    def _tag_sentence(self, sentence):
+        return nltk.tag.pos_tag(nltk.tokenize.word_tokenize(sentence))
+
+    def _tokenize_sentences(self, document):
+        return nltk.tokenize.sent_tokenize(document)
+
+    def perform_pos_tagging(self, document, tag_prefix=""):
+        sentences = self._tokenize_sentences(document)
+        tagged_text = []
+        for sentence in sentences:
+            tagged_text = tagged_text + (self._tag_sentence(sentence))
+        return [word for (word, tag) in tagged_text if tag.startswith(tag_prefix)]
