@@ -51,6 +51,11 @@
     border-radius: 0px;
 }
 
+.panel-body > a {
+    display: inline-block;
+    margin: 2px;
+}
+
 .zero {
     margin: 0px;
 }

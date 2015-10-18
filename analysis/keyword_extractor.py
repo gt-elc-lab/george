@@ -9,14 +9,14 @@ from sklearn import feature_extraction
 
 class KeyWordExtractor(object):
 
-    def __init__(self, documents, analyser=None, text_accessor=lambda x: x, stop_words_list=None):
+    def __init__(self, documents, analyser=None, text_accessor=lambda x: x, stop_words_list=None, ngram_range=(1,1)):
         """
         Args:
             documents (list<T>):
             analyser (analysis.TFIDFHelper):
             text_accessor (function): function to get text from document object
         """
-        self.analyser = analyser or TFIDFHelper(stopwords=stop_words_list, get_text=text_accessor)
+        self.analyser = analyser or TFIDFHelper(stopwords=stop_words_list, get_text=text_accessor, ngram_range=ngram_range)
         self.vectors = self.analyser.compute_scores(documents)
 
     def get_keywords(self, document_index, threshold=0.20):
@@ -29,13 +29,13 @@ class KeyWordExtractor(object):
         Returns:
             a set of keywords
         """
-        return set([term for term, weight in self.vectors[document_index]
-            if weight >= threshold])
+        return [(term, weight) for term, weight in self.vectors[document_index]
+            if weight >= threshold]
 
 class TFIDFHelper(object):
 
     def __init__(self, stopwords=None,
-                get_text=lambda x: x):
+                get_text=lambda x: x, ngram_range=(1,1)):
         """
         Input:
             stopwords list<str>: list of terms to ignore
@@ -45,7 +45,7 @@ class TFIDFHelper(object):
         self.stopwords = stopwords or set(nltk.corpus.stopwords.words('english') + get_stop_words('english'))
         self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
         self.count_vectorizer = feature_extraction.text.CountVectorizer(
-            stop_words=self.stopwords, ngram_range=(1, 1))
+            stop_words=self.stopwords, ngram_range=ngram_range)
         self.get_text = get_text
         self.vocabulary_keys = None
         self.vocabulary_values = None

@@ -69,6 +69,14 @@ class GraphGenerator(object):
                 if len(intersection) > threshold:
                     G.add_edge(node, other)
                     G[node][other]['weight'] = len(intersection)
+
+        # remove any isolated vertices before we perform community detection
+        orphans = []
+        for node in G.nodes():
+            if not G.neighbors(node):
+                G.remove_node(node)
+                orphans.append(node)
+        G.add_nodes_from(orphans)
         partition_lookup = community.best_partition(G).iteritems()
         partitions = {node._id: value for node, value in partition_lookup}
         as_json = json_graph.node_link_data(G)

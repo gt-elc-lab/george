@@ -78,13 +78,39 @@ class ExtractionWorker(threading.Thread):
         return
 
     def run(self):
+        # used by the keyword extractor to retrieve the text from a submission
+        # for posts we want to also have the title because the contents tends to be informative.
+        def get_text(post):
+            if post.stype == 'COMMENT':
+                return post.body
+            return ' '.join([post.title, post.body])
+
         while True:
             logger.info('Starting {}'.format(self.college))
             corpus = self.q.get()
-            keyword_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.body,
-                                                 stop_words_list=self.stop_words_list)
+            unigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
+                                                 stop_words_list=self.stop_words_list, ngram_range=(1, 1))
+            # bigram_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.body,
+            #                                     stop_words_list=self.stop_words_list, ngram_range=(2, 2))
             for index, document in enumerate(corpus):
-                document.keywords = list(keyword_extractor.get_keywords(index))
+                unigrams = unigram_extractor.get_keywords(index)
+                # bigrams = bigram_extractor.get_keywords(index)
+                # bigram_to_ngram_lookup = {}
+                # for bigram, weight in bigrams:
+                #     first, second = bigram.split(' ')
+                #     bigram_to_ngram_lookup[first] = (bigram, weight)
+                #     bigram_to_ngram_lookup[second] = (bigram, weight)
+                # final_keywords = set()
+                # for unigram, unigram_weight in unigrams:
+                #     if unigram in bigram_to_ngram_lookup:
+                #         parent_bigram, bigram_weight = bigram_to_ngram_lookup[unigram]
+                #         if unigram_weight < bigram_weight:
+                #             # the bigram has a higher weight so mark the bigram
+                #             # as a keyword
+                #             final_keywords.add(parent_bigram)
+                #         else:
+                #             final_keywords.add(unigram)
+                document.keywords = [keyword for keyword, weight in unigrams]
                 self.dao.insert(document.to_record())
             logger.info('Finished {} {} submissions'.format(self.college, len(corpus)))
             self.q.task_done()

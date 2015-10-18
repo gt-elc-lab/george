@@ -9,7 +9,7 @@ george.directive('dailyActivityPanel', ['RestService', DailyActivityPanel]);
 george.directive('activityGraph', ['RestService', ActivityGraph]);
 george.directive('wordTree', ['RestService', WordTree]);
 george.directive('cokeywordsGraph', ['RestService', CokeywordsGraph]);
-
+george.directive('submissionCard', ['RestService', SubmissionCard]);
 
 
 function DropdownMultiselect() {
@@ -219,31 +219,19 @@ function TrendingGraph() {
     };
 
     directive.link = function($scope, $element, $attr) {
-        var w = 800;
-        var h = 700;
+        var w = 600;
+        var h = 500;
+
         var svg = d3.select('#force-layout-graph').append('svg')
                     .attr('width', w)
                     .attr('height', h);
-        $scope.restService.getTrendingGraph($scope.college)
-            .success(function(data) {
-            svg.selectAll("*").remove();
-                var linkScale = d3.scale.linear()
-                                    .domain([1, d3.max(data.edges.map(function(d) {
-                                        return d.weight;
-                                    }))])
-                                    .range([1, 0]);
-
+        $scope.restService.getTrendingGraph($scope.college).success(function(data) {
+                svg.selectAll("*").remove();
                 var force = d3.layout.force()
                                 .nodes(data.nodes)
                                 .links(data.edges)
                                 .size([w, h])
-                                .charge(-120)
-                                .linkDistance(50)
-                                .linkStrength(function(edge) {
-                                    var val = linkScale(edge.weight);
-                                    console.log(val, edge.weight);
-                                    return val;
-                                })
+                                .linkDistance(25)
                                 .start();
 
                 var edges = svg.selectAll('line')
@@ -257,21 +245,28 @@ function TrendingGraph() {
                                 .attr("x2", function(d) { return d.target.x; })
                                 .attr("y2", function(d) { return d.target.y; });
 
-                var color = {POST: 'blue', COMMENT: 'red'};
-                var colorScale = d3.scale.category10();
+                var colorScale = d3.scale.category20();
                 var nodes = svg.selectAll('circle')
                                 .data(data.nodes)
                                 .enter()
                                 .append('circle')
-                                .attr('r', 15)
+                                .attr('r', 8)
+                                .attr("cx", function(d) { return d.x; })
+                                .attr("cy", function(d) { return d.y; })
+                                .attr("stroke", function(d) {
+                                    if (d.stype == 'POST') {
+                                        return 'red';
+                                    }
+                                    return 'none';
+                                })
+                                .attr('stroke-width', '4px')
+                                .style('cursor', 'pointer')
                                 .style('fill', function(d) {
                                     if (d.partition) {
                                         return colorScale(d.partition);
                                     }
                                     return 'black';
-                                })
-                                .attr("cx", function(d) { return d.x; })
-                                .attr("cy", function(d) { return d.y; });
+                                });
 
                 force.on('tick', function() {
                     edges.attr("x1", function(d) { return d.source.x; })
@@ -284,28 +279,54 @@ function TrendingGraph() {
                 });
 
                 force.on('end', function() {
-                    var keywordPoints = calcCenterOfMass(nodes[0].map(function(d) {return d.__data__;}));
-                    var frequencies = keywordPoints.map(function(d) {return d.frequency});
-                    var scale = d3.scale.linear()
-                                .domain([1, d3.max(frequencies)])
-                                .range([0, 40])
-                                .clamp(true);
+                    var allKeywords = d3.merge(data.nodes.map(function(d) {
+                        return d.keywords;
+                    }));
+                    var fontScale = d3.scale.linear()
+                            .domain([1, d3.max(getCounter(allKeywords).values())])
+                            .range([5, 40]);
+
+                    var connectedNodes = data.nodes.filter(function(d) {
+                        return d.partition;
+                    });
+                    var partitions = d3.set(connectedNodes.map(function(d) {
+                        return d.partition;
+                    }));
+
+                    var structs = partitions.values().map(function(partition) {
+                            var community = connectedNodes.filter(function(node) {
+                                return node.partition == partition;
+                            });
+                            var keywords = d3.merge(community.map(function(node) {
+                                return node.keywords;
+                            }));
+                            var counter = getCounter(keywords);
+                            var orderedKeywords = counter.entries().sort(function(a, b) {
+                                return b.value - a.value;
+                            });
+                            var struct = {
+                                keyword: orderedKeywords[0].key,
+                                total: orderedKeywords[0].value,
+                                x: d3.mean(community.map(function(d) {return d.x})),
+                                y: d3.mean(community.map(function(d) {return d.y}))
+                            };
+                            return struct;
+                    });
                     var keywords = svg.selectAll('g')
-                        .data(keywordPoints)
+                        .data(structs)
                         .enter()
                         .append('g')
                         .append('text')
-                        .attr('x', function(d) { return d.getX();})
-                        .attr('y', function(d) { return d.getY();})
+                        .attr('x', function(d) { return d.x;})
+                        .attr('y', function(d) { return d.y;})
                         .attr('fill', 'blue')
                         .style('margin', '1px')
-                        .attr('font-size', function(d) {return scale(d.frequency) + 'px';})
-                        .text(function(d) {return d.term;});
+                        .attr('font-size', function(d) {return fontScale(d.total) + 'px';})
+                        .text(function(d) {return d.keyword;});
                 });
 
                 nodes.on('click', function(d) {
-                    $scope.current = d;
-                    console.log(d);
+                    $scope.selected = d;
                     $scope.$apply();
                 });
         })
@@ -314,39 +335,15 @@ function TrendingGraph() {
         });
     };
 
-    function Point(term, x, y) {
-        this.x = x;
-        this.y = y;
-        this.term = term;
-        this.frequency = 0;
-    }
-
-    Point.prototype.getX = function() {
-        return this.x / this.frequency;
-    };
-
-    Point.prototype.getY = function() {
-        return this.y / this.frequency;
-    };
-
-    function calcCenterOfMass(nodes) {
-        var counter = {}
-        nodes.forEach(function(n) {
-            n.keywords.forEach(function(keyword) {
-                if (!(keyword in counter)) {
-                    counter[keyword] = new Point(keyword, 0, 0);
-                }
-                var p = counter[keyword];
-                p.frequency++;
-                p.x = p.x + n.x;
-                p.y = p.y + n.y;
-            });
+    function getCounter(array) {
+        var counter = d3.map();
+        array.forEach(function(element) {
+            if (!counter.has(element)) {
+                counter.set(element, 0);
+            }
+            counter.set(element, counter.get(element) + 1);
         });
-
-
-        return Object.keys(counter).map(function(i) {
-            return counter[i];
-        });
+        return counter;
     }
 
     return directive;
@@ -708,4 +705,25 @@ function CokeywordsGraph() {
     });
   };
   return directive;
+}
+
+function SubmissionCard() {
+     var directive = {
+        scope: {
+            submission: '='
+        },
+        restrict: 'AE',
+        templateUrl: '../templates/submissioncard.html',
+        replace: true
+    };
+
+    directive.controller = function($scope) {
+        $scope.keywords = $scope.submission ? $scope.submission.keywords.slice(3) : [];
+    };
+
+    directive.link = function($scope, $element, $attrs) {
+        $scope.numReplies = $scope.submission ? $scope.submission.comments.length : 0;
+    };
+
+    return directive;
 }
