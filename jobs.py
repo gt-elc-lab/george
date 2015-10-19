@@ -34,7 +34,7 @@ class ExtractionTask(Task):
         mongo_dao = MongoDao()
         start = datetime.datetime.utcnow() - datetime.timedelta(days=1)
         match = {'$match': {
-                'created_utc': {'$gte': start},
+                'created_utc': {'$gte': start}
         }}
         group = {'$group': {
             '_id': '$college',
@@ -90,10 +90,10 @@ class ExtractionWorker(threading.Thread):
             corpus = self.q.get()
             unigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
                                                  stop_words_list=self.stop_words_list, ngram_range=(1, 1))
-            # bigram_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.body,
+            # bigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
             #                                     stop_words_list=self.stop_words_list, ngram_range=(2, 2))
             for index, document in enumerate(corpus):
-                unigrams = unigram_extractor.get_keywords(index)
+                unigrams = {unigram: value for unigram, value in unigram_extractor.get_keywords(index)}
                 # bigrams = bigram_extractor.get_keywords(index)
                 # bigram_to_ngram_lookup = {}
                 # for bigram, weight in bigrams:
@@ -101,16 +101,22 @@ class ExtractionWorker(threading.Thread):
                 #     bigram_to_ngram_lookup[first] = (bigram, weight)
                 #     bigram_to_ngram_lookup[second] = (bigram, weight)
                 # final_keywords = set()
-                # for unigram, unigram_weight in unigrams:
+                # for unigram, unigram_weight in unigrams.iteritems():
                 #     if unigram in bigram_to_ngram_lookup:
                 #         parent_bigram, bigram_weight = bigram_to_ngram_lookup[unigram]
-                #         if unigram_weight < bigram_weight:
-                #             # the bigram has a higher weight so mark the bigram
-                #             # as a keyword
+                #         first, second = parent_bigram.split(' ')
+                #         other = None
+                #         if unigram == first:
+                #             other = second
+                #         else:
+                #             other = first
+                #         if other in unigrams:
                 #             final_keywords.add(parent_bigram)
                 #         else:
                 #             final_keywords.add(unigram)
-                document.keywords = [keyword for keyword, weight in unigrams]
+                #     else:
+                #         final_keywords.add(unigram)
+                document.keywords = [keyword for keyword in unigrams]
                 self.dao.insert(document.to_record())
             logger.info('Finished {} {} submissions'.format(self.college, len(corpus)))
             self.q.task_done()

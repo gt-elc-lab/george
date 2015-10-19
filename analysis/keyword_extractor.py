@@ -98,11 +98,6 @@ class TFIDFHelper(object):
         Returns:
             [[(term, score).....] for each document]
         """
-        pos_tag = POSTagger()
-        new_documents = []
-        for document in documents:
-            new_documents = new_documents + pos_tag.perform_pos_tagging(self.get_text(document), ("NN", "VB", "JJ", "RB"))
-        
         tfidf_vectors = self.perform_tfidf(documents)
         document_terms = []
         for document in tfidf_vectors:
