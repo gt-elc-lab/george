@@ -7,14 +7,10 @@
         <h5 ng-if="submission.stype == 'POST'">
             {{submission.title}}
         </h5>
-        <div ng-if="submission.stype == 'COMMENT'">
-
-        </div>
-        <a href="">view on reddit</a>
-        <p>Tags</p>
-            <a  ui-sref="dashboard.keyword({keyword: keyword})"
-                ng-repeat="keyword in submission.keywords"
-                class="label label-success">{{keyword}}</a>
+        <p>{{submission.body}}</p>
+        <a  ui-sref="dashboard.keyword({keyword: keyword})"
+            ng-repeat="keyword in submission.keywords"
+            class="label label-success">{{keyword}}</a>
 
     </div>
 </div>

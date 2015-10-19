@@ -685,6 +685,10 @@ function CokeywordsGraph() {
           .enter().append('g')
             .attr('class', 'node')
             .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; })
+            .style('cursor', 'pointer')
+            .on('click', function(d) {
+              $scope.$state.go('dashboard.keyword', {keyword: d.name});
+            });
 
         node.append('circle')
             .attr('r', function(d) {
@@ -698,10 +702,7 @@ function CokeywordsGraph() {
                 return xScale(d.total) * 15 + 'px';
             })
             .style('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
-            .text(function(d) { return d.name; })
-            .on('click', function(d) {
-              $scope.$state.go('dashboard.keyword', {keyword: d.name});
-            });
+            .text(function(d) { return d.name; });
     });
   };
   return directive;
