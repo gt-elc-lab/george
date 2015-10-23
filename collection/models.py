@@ -1,40 +1,35 @@
+from mongoengine import *
 
-class Post(object):
+connect('reddit')
 
-    def __init__(self, **fields):
-        self.__dict__.update(fields)
-        return
+class Submission(Document):
+    r_id = StringField(primary_key=True)
+    ups = IntField()
+    downs = IntField()
+    score = FloatField()
+    permalink = StringField()
+    college = StringField()
+    subreddit = StringField()
+    created = DateTimeField()
+    content = StringField()
+    num_reports = IntField()
+    pos = FloatField()
+    neg = FloatField()
+    neu = FloatField()
+    keywords = ListField(StringField())
 
-    @staticmethod
-    def from_record(mongo_record):
-    	"""
-    	Get a new instance of a post object from a dictionary
+    meta = {'allow_inheritance': True,
+            'collection': 'posts',
+            'indexes': ['$content']
+            }
 
-    	Args:
-    	    mongo_record (dict): a dictionary
+    def get_content(self):
+        return self.content
 
-        Returns
-            models.Post object
-    	"""
-        return Post(**mongo_record)
+class Comment(Submission):
+    num_replies = IntField()
 
-    def to_record(self):
-        """
-        Returns:
-            a dictionary representation of the object
-        """
-        return self.__dict__
-
-    @staticmethod
-    def from_reddit_object(reddit):
-        pass
-
-    def to_json(self):
-    	"""
-    	Returns:
-            a json representation of the object
-    	"""
-        self.comments = map(str, self.comments)
-        self._id = str(self._id)
-        self.created_utc = str(self.created_utc)
-        return self.__dict__
+class Post(Submission):
+    title = StringField()
+    num_comments = IntField()
+    comments = ListField(ReferenceField(Comment))

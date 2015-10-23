@@ -39,10 +39,8 @@ class MongoDao(object):
         Returns
             models.Post object
         """
-        if isinstance(post_id, str):
-            post_id = ObjectId(post_id)
-        post_record = self.db.posts.find_one({'_id': post_id})
-        return models.Post.from_record(post_record)
+        obj = models.Submission.objects.get(r_id=post_id).to_json()
+        return obj
 
     def get_latest_posts(self, college='Georgia Tech'):
         """

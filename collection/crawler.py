@@ -5,9 +5,10 @@ import praw
 import random
 import string
 import threading
-from pymongo.collection import ReturnDocument
+import re
+
+import models
 from datetime import datetime, timedelta
-from config import SUBREDDITS, CREDENTIALS
 from Queue import Queue
 from analysis import sentiment_analysis
 
@@ -59,7 +60,7 @@ class RedditApiClient(object):
             a list of praw.comment objects
         """
         post.replace_more_comments(limit=None, threshold=0)
-        return post.comments
+        return praw.helpers.flatten_tree(post.comments)
 
     def random_name(self, length=10):
         """
@@ -215,44 +216,18 @@ class MongoDBService(object):
         post_count = 0
         comment_count = 0
         for post in posts:
-            # TODO(faisal): add error handling capability.
-            comments = get_comments(post)
-            post_record = self.serialize_post(post, college_info)
-            comment_ids = []
-            if comments:
-                comment_ids = [_id for _id in self.insert_comments(comments, college_info)]
-            # Join the post to its comments by storing the object ids of the
-            # comments
-            post_record['comments'] = comment_ids
-            post_record.update(self.sentiment.compute_sentiment(post_record['body']))
-            self.dao.insert(post_record)
+            post_model = self.serialize_post(post, college_info)
+            post_model.save()
+            comment_models = [self.serialize_comment(comment, college_info) for comment in get_comments(post)]
+            for comment in comment_models:
+                comment.save()
+            post_model.comments = comment_models
+            post_model.save()
             post_count += 1
-            comment_count += len(comment_ids)
+            comment_count += len(comment_models)
         logger.info('Saved: {} {} posts {} comments'.format(
             college_info['name'], post_count, comment_count))
         return
-
-    def insert_comments(self, comments, college_info):
-        """
-        Save the comments in the database.
-
-        Args:
-            comments (list<praw.comment>):
-
-        Returns:
-            a list of the ids that mongodb assigns to the comments. Used to
-            create a reference to the comments within the posts
-        """
-        inserted = []
-        for comment in comments:
-            comment_record = self.serialize_comment(comment, college_info)
-            comment_record.update(self.sentiment.compute_sentiment(comment.body))
-            if comment.replies:
-                comment_record['comments'] = self.insert_comments(comment.replies, college_info)
-            insert_result = self.dao.insert(comment_record)
-            # Store the ids of the the comments that were inserted.
-            inserted.append(insert_result['_id'])
-        return inserted
 
     def last_post_date(self, college_info):
         """
@@ -277,7 +252,7 @@ class MongoDBService(object):
     @staticmethod
     def serialize_post(submission, college_info):
         """
-        Convert a praw post object to a dictionary.
+        Convert a praw post object to a mongoengine model.
 
         Args:
             submission (praw.post): praw post object
@@ -288,24 +263,22 @@ class MongoDBService(object):
         """
         college = college_info['name']
         subreddit = college_info['subreddit']
-        return {
-            'title': submission.title,
-            'reddit_id': submission.id,
-            'body': submission.selftext,
-            'url': submission.url,
-            'ups': submission.ups,
-            'downs': submission.downs,
-            'subreddit': subreddit,
-            'college': college,
-            'created_utc': datetime.utcfromtimestamp(submission.created_utc),
-            'comments': [],
-			'stype': 'POST'
-        }
-
+        return models.Post(r_id=submission.id,
+                           ups=submission.ups,
+                           downs=submission.downs,
+                           score=submission.score,
+                           permalink=submission.permalink,
+                           content=submission.selftext,
+                           title=submission.title,
+                           num_comments=submission.num_comments,
+                           num_reports=submission.num_reports,
+                           created=datetime.utcfromtimestamp(submission.created_utc),
+                           subreddit=subreddit,
+                           college=college)
     @staticmethod
     def serialize_comment(comment, college_info):
         """
-        Convert a praw  comment object to a dictionary
+        Convert a praw  comment object to a mongoengine model
 
         Args:
             submission (praw.comment) : praw comment object
@@ -313,14 +286,14 @@ class MongoDBService(object):
         """
         college = college_info['name']
         subreddit = college_info['subreddit']
-        return {
-            'body': comment.body,
-            'reddit_id': comment.id,
-            'ups': comment.ups,
-            'downs': comment.downs,
-            'college': college,
-            'subreddit' : subreddit,
-            'created_utc': datetime.utcfromtimestamp(comment.created_utc),
-            'comments': [],
-			'stype': 'COMMENT'
-        }
+        return models.Comment(r_id=comment.id,
+                              ups=comment.ups,
+                              downs=comment.downs,
+                              score=comment.score,
+                              permalink=comment.permalink,
+                              content=comment.body,
+                              num_replies=len(comment.replies),
+                              num_reports=comment.num_reports,
+                              created=datetime.utcfromtimestamp(comment.created_utc),
+                              subreddit=subreddit,
+                              college=college)

@@ -3,6 +3,7 @@ import os
 import flask
 import datetime
 from collection.dao import MongoDao
+from collection import models
 import route_handlers
 
 if os.environ.get('PROD'):
@@ -18,21 +19,11 @@ def index():
 
 @application.route('/colleges')
 def send_colleges():
-    return flask.jsonify({'colleges': dao.get_colleges()})
+    return flask.jsonify({'colleges': models.Submission.objects.distinct('college')})
 
-@application.route('/post/<post_id>')
-def send_post(post_id):
-    return flask.jsonify(dao.get_post(str(post_id)).to_json())
-
-@application.route('/comment/<comment_id>')
-def send_comment(comment_id):
-    return flask.jsonify(dao.get_comment(str(comment_id)).to_json())
-
-@application.route('/comments/<post_id>')
-def send_comments(post_id):
-	comments = [comment_model.to_json()
-				for comment_model in dao.get_post_comments(str(post_id))]
-	return flask.jsonify({'comments': comments})
+@application.route('/submission/<post_id>')
+def send_submission(post_id):
+    return flask.jsonify(data=models.Submission.objects.get(r_id=post_id).to_json())
 
 @application.route('/submissions/keyword/<keyword>/<int:page>')
 def send_submissions_by_keyword(keyword, page):
