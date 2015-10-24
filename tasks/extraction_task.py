@@ -45,11 +45,11 @@ class ExtractionWorker(threading.Thread):
         task.logger.info('Starting {}'.format(self.college))
         while True:
             corpus = self.q.get()
-            unigram_extractor = KeyWordExtractor(corpus, text_accessor=lambda x: x.get_content(),
+            unigram_list = KeyWordExtractor.get_keywords(corpus, text_accessor=lambda x: x.get_content(),
                                                  stop_words_list=self.stop_words_list, ngram_range=(1, 1))
-            for index, document in enumerate(corpus):
-                unigrams = {unigram: value for unigram, value in unigram_extractor.get_keywords(index)}
-                document.keywords = [keyword for keyword in unigrams]
+            for document, unigrams in zip(corpus, unigram_list):
+                keywords = {unigram: value for unigram, value in unigrams}
+                document.keywords = [keyword for keyword in keywords]
                 document.save()
             task.logger.info('Finished {} {} submissions'.format(self.college, len(corpus)))
             self.q.task_done()

@@ -56,7 +56,8 @@ def send_frequency_data():
 @application.route('/trendinggraph/<college>')
 def send_graph(college):
     handler = route_handlers.GraphHandler()
-    return flask.jsonify(handler.execute(college))
+    data = handler.execute(college)
+    return flask.jsonify(data)
 
 @application.route('/daily')
 def send_daily_activity_summary():
