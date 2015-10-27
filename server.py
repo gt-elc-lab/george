@@ -2,6 +2,8 @@ import collections
 import os
 import flask
 import datetime
+import pymongo
+
 from collection.dao import MongoDao
 from collection import models
 import route_handlers
@@ -19,7 +21,9 @@ def index():
 
 @application.route('/colleges')
 def send_colleges():
-    return flask.jsonify({'colleges': models.Submission.objects.distinct('college')})
+    colleges = models.Submission.objects.distinct('college')
+    colleges.sort()
+    return flask.jsonify({'colleges': colleges})
 
 @application.route('/submission/<post_id>')
 def send_submission(post_id):
@@ -120,6 +124,13 @@ def send_keyword_activity(keyword):
     college = flask.request.args.get('college')
     handler = route_handlers.KeywordActivityHandler()
     return flask.json.dumps(handler.execute(keyword, college))
+
+@application.route('/wordcount/<college>')
+def send_word_count(college):
+    word_count_db = pymongo.MongoClient()['reddit']['wordcount']
+    query = {'_id.college': college}
+    word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING)
+    return flask.render_template('wordcount.html', college=college, data=word_counts)
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

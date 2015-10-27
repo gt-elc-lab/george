@@ -13,7 +13,7 @@ class ExtractionTask(task.Task):
 
     @staticmethod
     def execute():
-        start = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+        start = datetime.datetime.utcnow() - datetime.timedelta(days=3)
         match = {'$match': {'created': {'$gte': start}}}
         group = {'$group': {'_id': '$college', 'posts': {'$push': '$_id'}}}
         query_result = {college['_id']: college['posts']

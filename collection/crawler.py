@@ -240,14 +240,10 @@ class MongoDBService(object):
         Returns: A datetime object
         """
         college = college_info['name']
-        last_post_query = self.dao.post_collection.find(
-            {'college': college}).sort(
-                'created_utc', pymongo.DESCENDING).limit(1)
-        last_post = list(last_post_query)
-        if last_post:
-            return last_post[0]['created_utc']
-        # We haven't crawled the subreddit at all.
-        return False
+        latest_submission = models.Submission.objects(college=college).first()
+        if latest_submission:
+            return latest_submission.created
+        return None
 
     @staticmethod
     def serialize_post(submission, college_info):

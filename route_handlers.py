@@ -203,7 +203,7 @@ class KeyWordTreeHandler(RouteHandler):
         sort = {'$sort': {'total': -1}}
         limit = {'$limit': 10}
         pipeline = [match, project, group, sort, limit]
-        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        query_result = models.Submission.aggregate(*pipeline)
         formatted_output = map(lambda x: {'name': x['_id'], 'total': x['total']}, query_result)
         return {
             'name': keyword,
