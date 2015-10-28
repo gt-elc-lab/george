@@ -16,4 +16,4 @@ class SentimentHelper(object):
         Returns:
             dictionary of sentiment scores 
         """
-        return vader(re.sub(r'\W+', '', text))
+        return vader(text.encode('utf8'))
