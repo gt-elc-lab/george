@@ -85,7 +85,7 @@ class RedditApiClient(object):
         Returns:
             an int of the datetime seconds
         """
-        return int(dt.strftime('%s'))
+        return int((dt - datetime(1970,1,1)).total_seconds())
 
 
 class RedditWorker(threading.Thread):
