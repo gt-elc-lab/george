@@ -127,9 +127,9 @@ def send_keyword_activity(keyword):
 
 @application.route('/wordcount/<college>')
 def send_word_count(college):
-    word_count_db = pymongo.MongoClient()['reddit']['wordcount']
+    word_count_db = pymongo.MongoClient('mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump')['redditdump']['wordcount']
     query = {'_id.college': college}
-    word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING)
+    word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING).limit(1000)
     return flask.render_template('wordcount.html', college=college, data=word_counts)
 
 def get_today_from_offset(offset):
