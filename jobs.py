@@ -90,32 +90,35 @@ class ExtractionWorker(threading.Thread):
             corpus = self.q.get()
             unigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
                                                  stop_words_list=self.stop_words_list, ngram_range=(1, 1))
-            # bigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
-            #                                     stop_words_list=self.stop_words_list, ngram_range=(2, 2))
+            bigram_extractor = KeyWordExtractor(corpus, text_accessor=get_text,
+                                                 stop_words_list=self.stop_words_list, ngram_range=(2, 2))
             for index, document in enumerate(corpus):
                 unigrams = {unigram: value for unigram, value in unigram_extractor.get_keywords(index)}
-                # bigrams = bigram_extractor.get_keywords(index)
-                # bigram_to_ngram_lookup = {}
-                # for bigram, weight in bigrams:
-                #     first, second = bigram.split(' ')
-                #     bigram_to_ngram_lookup[first] = (bigram, weight)
-                #     bigram_to_ngram_lookup[second] = (bigram, weight)
-                # final_keywords = set()
-                # for unigram, unigram_weight in unigrams.iteritems():
-                #     if unigram in bigram_to_ngram_lookup:
-                #         parent_bigram, bigram_weight = bigram_to_ngram_lookup[unigram]
-                #         first, second = parent_bigram.split(' ')
-                #         other = None
-                #         if unigram == first:
-                #             other = second
-                #         else:
-                #             other = first
-                #         if other in unigrams:
-                #             final_keywords.add(parent_bigram)
-                #         else:
-                #             final_keywords.add(unigram)
-                #     else:
-                #         final_keywords.add(unigram)
+                bigrams = bigram_extractor.get_keywords(index)
+                bigram_to_ngram_lookup = {}
+                for bigram, weight in bigrams:
+                    first, second = bigram.split(' ')
+                    bigram_to_ngram_lookup[first] = (bigram, weight) if not first in bigram_to_ngram_lookup else (bigram, max(weight, bigram_to_ngram_lookup[first][1]))
+                    bigram_to_ngram_lookup[second] = (bigram, weight) if not second in bigram_to_ngram_lookup else (bigram, max(weight, bigram_to_ngram_lookup[second][1]))
+                final_keywords = {}
+                for unigram, unigram_weight in unigrams.iteritems():
+                    if unigram in bigram_to_ngram_lookup:
+                        bigram, bigram_weight = bigram_to_ngram_lookup[unigram]
+                        first, second = bigram.split(' ')
+                        if first == unigram:
+                            if unigram_weight < bigram_weight:
+                                if bigram in final_keywords:
+                                    final_keywords[bigram] = max(bigram_weight, final_keywords[bigram])
+                                else:
+                                    final_keywords[bigram] = bigram_weight
+                        if second == unigram:
+                            if unigram_weight < bigram_weight:
+                                if bigram in final_keywords:
+                                    final_keywords[bigram] = max(bigram_weight, final_keywords[bigram])
+                                else:
+                                    final_keywords[bigram] = bigram_weight
+                    else:
+                        final_keywords[unigram] = unigram_weight
                 document.keywords = [keyword for keyword in unigrams]
                 self.dao.insert(document.to_record())
             logger.info('Finished {} {} submissions'.format(self.college, len(corpus)))
