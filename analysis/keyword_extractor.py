@@ -10,7 +10,7 @@ class KeyWordExtractor(object):
 
         """
     @staticmethod
-    def get_keywords(documents, text_accessor=lambda x: x, threshold=0.25, stop_words_list=None, ngram_range=(1, 1)):
+    def get_keywords(documents, text_accessor=lambda x: x, threshold=0.2, stop_words_list=None, ngram_range=(1, 1)):
         """
         Args:
             documents list(<T>):
@@ -18,7 +18,7 @@ class KeyWordExtractor(object):
         Returns:
             a set of keywords
         """
-        tfidf_vectorizer = TfidfVectorizer(stop_words=stop_words_list, ngram_range=ngram_range, binary=True)
+        tfidf_vectorizer = TfidfVectorizer(stop_words=stop_words_list, ngram_range=ngram_range)
         corpus = [text_accessor(doc) for doc in documents]
         matrix = tfidf_vectorizer.fit_transform(corpus)
         features = tfidf_vectorizer.get_feature_names()
@@ -26,7 +26,7 @@ class KeyWordExtractor(object):
         for vector in matrix:
             terms = [(features[feature_index], weight) for feature_index, weight in zip(vector.indices, vector.data)
                      if weight > threshold]
-            document_terms.append(terms)
+            document_terms.append(set(terms))
         return document_terms
 
     @staticmethod

@@ -154,7 +154,7 @@ class TrendingKeyWordHandler(RouteHandler):
         project = {'$unwind': '$keywords'}
         group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
         sort = {'$sort': {'total': -1}}
-        limit = {'$limit': 10}
+        limit = {'$limit': 20}
         query_result = models.Submission.objects.aggregate(match, project, group, sort, limit)
         format_output = lambda x: {'keyword': x['_id'], 'total': x['total']}
         return map(format_output, query_result)
@@ -203,7 +203,7 @@ class KeyWordTreeHandler(RouteHandler):
         sort = {'$sort': {'total': -1}}
         limit = {'$limit': 10}
         pipeline = [match, project, group, sort, limit]
-        query_result = models.Submission.aggregate(*pipeline)
+        query_result = models.Submission.objects.aggregate(*pipeline)
         formatted_output = map(lambda x: {'name': x['_id'], 'total': x['total']}, query_result)
         return {
             'name': keyword,

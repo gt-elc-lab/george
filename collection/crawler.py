@@ -240,7 +240,7 @@ class MongoDBService(object):
         Returns: A datetime object
         """
         college = college_info['name']
-        latest_submission = models.Submission.objects(college=college).first()
+        latest_submission = models.Submission.objects(college=college).order_by('-created').first()
         if latest_submission:
             return latest_submission.created
         return None

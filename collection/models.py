@@ -6,7 +6,7 @@ class Submission(Document):
     r_id = StringField(primary_key=True)
     ups = IntField()
     downs = IntField()
-    score = FloatField()
+    score = IntField()
     permalink = StringField()
     college = StringField()
     subreddit = StringField()
