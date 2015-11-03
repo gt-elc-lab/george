@@ -32,8 +32,8 @@ class GraphGenerator(object):
             if not G.neighbors(node):
                 G.remove_node(node)
                 orphans.append(node)
-        G.add_nodes_from(orphans)
         partition_lookup = community.best_partition(G).iteritems()
+        G.add_nodes_from(orphans)
         partitions = {node.r_id: value for node, value in partition_lookup}
         as_json = json_graph.node_link_data(G)
         frontend_compatable = {}

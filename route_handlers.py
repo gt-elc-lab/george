@@ -154,7 +154,7 @@ class TrendingKeyWordHandler(RouteHandler):
         project = {'$unwind': '$keywords'}
         group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
         sort = {'$sort': {'total': -1}}
-        limit = {'$limit': 20}
+        limit = {'$limit': 10}
         query_result = models.Submission.objects.aggregate(match, project, group, sort, limit)
         format_output = lambda x: {'keyword': x['_id'], 'total': x['total']}
         return map(format_output, query_result)

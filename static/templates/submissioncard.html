@@ -4,10 +4,10 @@
     </div>
 
     <div class="panel-body">
-        <h5 ng-if="submission.stype == 'POST'">
+        <h5 ng-if="submission.title">
             {{submission.title}}
         </h5>
-        <p>{{submission.body}}</p>
+        <p>{{submission.content}}</p>
         <a  ui-sref="dashboard.keyword({keyword: keyword})"
             ng-repeat="keyword in submission.keywords"
             class="label label-success">{{keyword}}</a>
