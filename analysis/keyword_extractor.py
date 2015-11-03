@@ -1,6 +1,7 @@
 import nltk
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from nltk.tag.stanford import NERTagger
 
 class KeyWordExtractor(object):
 
@@ -56,3 +57,12 @@ class POSTagger(object):
         for sentence in sentences:
             tagged_text = tagged_text + (self._tag_sentence(sentence))
         return [word for (word, tag) in tagged_text if tag.startswith(tag_prefix)]
+
+class NER(object):
+    """ Performs NER against a given document"""
+    
+    def __init__(self):
+        self.tagger = NERTagger('/stanford_ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/stanford_ner/stanford-ner.jar')
+
+    def perform_ner(self, text):
+        return self.tagger.tag(text)
