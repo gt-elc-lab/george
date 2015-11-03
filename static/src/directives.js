@@ -254,7 +254,7 @@ function TrendingGraph() {
                                 .attr("cx", function(d) { return d.x; })
                                 .attr("cy", function(d) { return d.y; })
                                 .attr("stroke", function(d) {
-                                    if (d.stype == 'POST') {
+                                    if (d.title) {
                                         return 'red';
                                     }
                                     return 'none';

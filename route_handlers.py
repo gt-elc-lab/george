@@ -2,9 +2,9 @@ import threading
 import logging
 import pymongo
 from collections import defaultdict
+
 from analysis.graph import GraphGenerator
 from analysis.suffix_tree import SuffixTree
-from analysis.keyword_extractor import KeyWordExtractor
 from collection.dao import MongoDao
 from collection import models
 from datetime import datetime, timedelta
@@ -103,7 +103,7 @@ class GraphHandler(RouteHandler):
                  'keywords': {'$exists': True},
                  'created_utc': {'$gte': start},
             }
-        documents = map(models.Post.from_record, self.mongo_dao.post_collection.find(query))
+        documents = models.Submission.objects(college=college, keywords__exists=True, created__gte=start)
         if documents:
             return GraphGenerator._with_networkx(documents)
 
@@ -150,13 +150,12 @@ class TrendingKeyWordHandler(RouteHandler):
         self.mongo_dao = MongoDao()
 
     def execute(self, college,  date_limit):
-        match = {'$match': {'college': college, 'created_utc': {'$gte': date_limit}}}
+        match = {'$match': {'college': college, 'created': {'$gte': date_limit}}}
         project = {'$unwind': '$keywords'}
         group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
         sort = {'$sort': {'total': -1}}
         limit = {'$limit': 10}
-        pipeline = [match, project, group, sort, limit]
-        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        query_result = models.Submission.objects.aggregate(match, project, group, sort, limit)
         format_output = lambda x: {'keyword': x['_id'], 'total': x['total']}
         return map(format_output, query_result)
 
@@ -204,7 +203,7 @@ class KeyWordTreeHandler(RouteHandler):
         sort = {'$sort': {'total': -1}}
         limit = {'$limit': 10}
         pipeline = [match, project, group, sort, limit]
-        query_result = self.mongo_dao.post_collection.aggregate(pipeline)
+        query_result = models.Submission.objects.aggregate(*pipeline)
         formatted_output = map(lambda x: {'name': x['_id'], 'total': x['total']}, query_result)
         return {
             'name': keyword,

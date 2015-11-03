@@ -1,0 +1,8 @@
+<!doctype html>
+<title>{{college}}</title>
+<h1>{{college}}</h1>
+<ol>
+  {% for d in data %}
+    <li><h1>{{d._id.word}}    {{d.value}}</h1></li>
+  {% endfor %}
+</ol>

@@ -1,117 +1,47 @@
-
-import re
 import nltk
-from stop_words import get_stop_words
-import string
-import pymongo
 from nltk.stem.porter import PorterStemmer
-from sklearn import feature_extraction
-from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+from nltk.tag.stanford import StanfordNERTagger
 
 class KeyWordExtractor(object):
 
-    def __init__(self, documents, analyser=None, text_accessor=lambda x: x, stop_words_list=None, ngram_range=(1,1)):
+    def __init__(self):
         """
         Args:
-            documents (list<T>):
-            analyser (analysis.TFIDFHelper):
-            text_accessor (function): function to get text from document object
-        """
-        self.analyser = analyser or TFIDFHelper(stopwords=stop_words_list, get_text=text_accessor, ngram_range=ngram_range)
-        self.vectors = self.analyser.compute_scores(documents)
 
-    def get_keywords(self, document_index, threshold=0.20):
+        """
+    @staticmethod
+    def get_keywords(documents, text_accessor=lambda x: x, threshold=0.2, stop_words_list=None, ngram_range=(1, 1)):
         """
         Args:
-            document_index (int): the index of the document. Used to find the
-                vector for the words to filter
-            threshold (float): TFIDF score to filter by
+            documents list(<T>):
 
         Returns:
             a set of keywords
         """
-        return [(term, weight) for term, weight in self.vectors[document_index]
-            if weight >= threshold]
-
-class TFIDFHelper(object):
-
-    def __init__(self, stopwords=None,
-                get_text=lambda x: x, ngram_range=(1,1)):
-        """
-        Input:
-            stopwords list<str>: list of terms to ignore
-            get_text <function>: text accessor function to retrieve strings.
-
-        """
-        self.stopwords = stopwords or set(nltk.corpus.stopwords.words('english') + get_stop_words('english'))
-        self.tfidf_transformer = feature_extraction.text.TfidfTransformer()
-        self.count_vectorizer = feature_extraction.text.CountVectorizer(
-            stop_words=self.stopwords, ngram_range=ngram_range)
-        self.get_text = get_text
-        self.vocabulary_keys = None
-        self.vocabulary_values = None
-        return
-
-    def _count_vectorize(self, documents):
-        """
-
-        Args:
-            documents list(str): list of documents
-
-        Returns:
-
-        """
-        return self.count_vectorizer.fit_transform(documents)
-
-
-    def _fit_transform(self, vectors):
-        """
-
-        Args:
-            vectors:
-
-        Returns:
-
-        """
-        return self.tfidf_transformer.fit_transform(vectors)
-
-
-    def perform_tfidf(self, documents):
-        """
-
-        Args:
-            documents list(T) : list of documents
-
-        Returns:
-
-        """
-        word_counts = self._count_vectorize(
-            [self.get_text(document) for document in documents])
-        self.vocabulary_keys = self.count_vectorizer.vocabulary_.keys()
-        self.vocabulary_values = self.count_vectorizer.vocabulary_.values()
-        return self._fit_transform(word_counts).toarray()
-
-    def compute_scores(self, documents):
-        """
-        Args:
-            documents list(T) : list of documents
-        Returns:
-            [[(term, score).....] for each document]
-        """
-        tfidf_vectors = self.perform_tfidf(documents)
+        tfidf_vectorizer = TfidfVectorizer(stop_words=stop_words_list, ngram_range=ngram_range)
+        corpus = [text_accessor(doc) for doc in documents]
+        matrix = tfidf_vectorizer.fit_transform(corpus)
+        features = tfidf_vectorizer.get_feature_names()
         document_terms = []
-        for document in tfidf_vectors:
-            terms = []
-            for j, score in enumerate(document):
-                term = self.vocabulary_keys[self.vocabulary_values.index(j)]
-                terms.append((term, score))
-            document_terms.append(terms)
+        for vector in matrix:
+            terms = [(features[feature_index], weight) for feature_index, weight in zip(vector.indices, vector.data)
+                     if weight > threshold]
+            document_terms.append(set(terms))
         return document_terms
+
+    @staticmethod
+    def stem_tokens(tokens, stemmer):
+        return [stemmer.stem(item) for item in tokens]
+
+    @staticmethod
+    def tokenize(text):
+        return nltk.word_tokenize(text)
 
 
 class POSTagger(object):
     """ Performs POS tagging against a given document"""
-    
+
     def __init__(self):
         return
 
@@ -127,3 +57,12 @@ class POSTagger(object):
         for sentence in sentences:
             tagged_text = tagged_text + (self._tag_sentence(sentence))
         return [word for (word, tag) in tagged_text if tag.startswith(tag_prefix)]
+
+class NamedEntityTagger(object):
+    """ Performs NER against a given document"""
+
+    def __init__(self):
+        self.tagger = StanfordNERTagger('/stanford_ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/stanford_ner/stanford-ner.jar')
+
+    def perform_ner(self, text):
+        return self.tagger.tag(text)

@@ -2,7 +2,10 @@ import collections
 import os
 import flask
 import datetime
+import pymongo
+
 from collection.dao import MongoDao
+from collection import models
 import route_handlers
 
 if os.environ.get('PROD'):
@@ -18,21 +21,13 @@ def index():
 
 @application.route('/colleges')
 def send_colleges():
-    return flask.jsonify({'colleges': dao.get_colleges()})
+    colleges = models.Submission.objects.distinct('college')
+    colleges.sort()
+    return flask.jsonify({'colleges': colleges})
 
-@application.route('/post/<post_id>')
-def send_post(post_id):
-    return flask.jsonify(dao.get_post(str(post_id)).to_json())
-
-@application.route('/comment/<comment_id>')
-def send_comment(comment_id):
-    return flask.jsonify(dao.get_comment(str(comment_id)).to_json())
-
-@application.route('/comments/<post_id>')
-def send_comments(post_id):
-	comments = [comment_model.to_json()
-				for comment_model in dao.get_post_comments(str(post_id))]
-	return flask.jsonify({'comments': comments})
+@application.route('/submission/<post_id>')
+def send_submission(post_id):
+    return flask.jsonify(data=models.Submission.objects.get(r_id=post_id).to_json())
 
 @application.route('/submissions/keyword/<keyword>/<int:page>')
 def send_submissions_by_keyword(keyword, page):
@@ -65,7 +60,8 @@ def send_frequency_data():
 @application.route('/trendinggraph/<college>')
 def send_graph(college):
     handler = route_handlers.GraphHandler()
-    return flask.jsonify(handler.execute(college))
+    data = handler.execute(college)
+    return flask.jsonify(data)
 
 @application.route('/daily')
 def send_daily_activity_summary():
@@ -128,6 +124,13 @@ def send_keyword_activity(keyword):
     college = flask.request.args.get('college')
     handler = route_handlers.KeywordActivityHandler()
     return flask.json.dumps(handler.execute(keyword, college))
+
+@application.route('/wordcount/<college>')
+def send_word_count(college):
+    word_count_db = pymongo.MongoClient('mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump')['redditdump']['wordcount']
+    query = {'_id.college': college}
+    word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING).limit(1000)
+    return flask.render_template('wordcount.html', college=college, data=word_counts)
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
