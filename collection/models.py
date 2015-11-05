@@ -1,6 +1,7 @@
 from mongoengine import *
+import config
 
-connect('reddit')
+connect('reddit', host=config.TEST_DB_URI)
 
 class Submission(Document):
     r_id = StringField(primary_key=True)
@@ -19,7 +20,7 @@ class Submission(Document):
     keywords = ListField(StringField())
 
     meta = {'allow_inheritance': True,
-            'collection': 'posts',
+            'collection': 'submissions',
             'indexes': ['$content']
             }
 
