@@ -10,6 +10,7 @@ george.directive('activityGraph', ['RestService', ActivityGraph]);
 george.directive('wordTree', ['RestService', WordTree]);
 george.directive('cokeywordsGraph', ['RestService', CokeywordsGraph]);
 george.directive('submissionCard', ['RestService', SubmissionCard]);
+george.directive('bigqueryGraph', ['$http', BigQueryGraph]);
 
 
 function DropdownMultiselect() {
@@ -725,6 +726,162 @@ function SubmissionCard() {
     directive.link = function($scope, $element, $attrs) {
         $scope.numReplies = $scope.submission ? $scope.submission.comments.length : 0;
     };
+
+    return directive;
+}
+
+function BigQueryGraph() {
+    var directive = {
+        scope: {
+            
+        },
+        restrict: 'AE',
+        templateUrl: '../templates/bigquerygraph.html',
+        replace: true
+    };
+
+    directive.controller = function($scope, $http) {
+        $scope.selected = {};
+        $scope.vm = {};
+        $http.get('/bigquery/subreddits')
+            .success(function(response){
+                $scope.subreddits = response;
+            })
+            .error(function(error) {
+                alert(error);
+            });
+
+        $scope.selectSubreddit = function(subreddit) {
+            if (subreddit in $scope.selected) {
+                delete $scope.selected[subreddit];
+            }
+            else {
+                $scope.selected[subreddit] = true;
+            }
+            $scope.vm.selected = $scope.getSelected();
+            console.log($scope.selected);
+        };
+
+        $scope.getSelected = function() {
+            return Object.keys($scope.selected);
+        };
+
+        $scope.graph = function() {
+            var params = {
+                subreddits: $scope.getSelected()
+            };
+            $http.get('/bigquery/score', {params: params}).then(function(response) {
+                render(response.data);
+            });
+        };
+
+        function render(data) {
+            data = data.map(transformer);
+            var flattened = d3.merge(data.map(function(i) {return i.data}));
+            var dateDomain = d3.extent(flattened, function(i) {return i.date});
+            var dateMin = dateDomain[0];
+            var dateMax = dateDomain[1];
+
+            var avgDomain = d3.extent(flattened, function(i) {return i.average});
+            var avgMin = avgDomain[0];
+            var avgMax = avgDomain[1];
+
+            var MARGIN = {
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20
+            };
+
+            var WIDTH = 900 - MARGIN.left - MARGIN.right;
+            var HEIGHT = 600 - MARGIN.bottom;
+
+            var svg = d3.select('#bigquerygraph').append('svg')
+                .attr('width', WIDTH)
+                .attr('height', HEIGHT)
+                .append('g')
+                .attr('transform',
+                    'translate(' + MARGIN.left + ',' + 0+ ')');
+
+            var xScale = d3.time.scale()
+                .domain(dateDomain)
+                .range([MARGIN.left, WIDTH - MARGIN.right - MARGIN.left]);
+
+            var yScale = d3.scale.linear()
+                .domain(avgDomain)
+                .range([HEIGHT - MARGIN.top, MARGIN.bottom]);
+
+            var area = d3.svg.area()
+                .x(function(d) {return xScale(d.date);})
+                .y0(HEIGHT - MARGIN.bottom)
+                .y1(function(d) {return yScale(d.average);});
+
+            var line = d3.svg.line()
+                .x(function(d) {return xScale(d.date);})
+                .y(function(d) {return yScale(d.average);})
+                .interpolate('monotone');
+
+            var yAxis = d3.svg.axis().scale(yScale).orient('left');
+            var xAxis = d3.svg.axis().scale(xScale).orient('bottom')
+                .ticks(d3.time.day)
+                .tickFormat(d3.time.format('%b %Y'));
+
+            svg.append('g')
+                .attr('class', 'x axis')
+                .attr('transform',
+                    'translate(' + 0 + ',' + (HEIGHT - MARGIN.bottom) + ')')
+                .call(xAxis);
+
+            svg.append('g')
+                .attr('class', 'y axis')
+                .attr('transform', 'translate(' + MARGIN.left + ',' + 0 + ')')
+                .call(yAxis)
+
+            data.forEach(function(i) {
+                var path = svg.append("path")
+                    .datum(i.data)
+                    .attr("class", "line")
+                    .attr('class', 'area')
+                    .attr('fill', 'none')
+                    .style('stroke', 'red')
+                    .style('stroke-width', '3px')
+                    .attr("d", line);
+
+                var points = svg.selectAll(".point")
+                    .data(i.data)
+                    .enter().append("svg:circle")
+                    .attr("stroke", "none")
+                    .attr("fill", 'red')
+                    .attr("cx", function(d) {
+                        return xScale(d.date)
+                    })
+                    .attr("cy", function(d) {
+                        return yScale(d.average)
+                    })
+                    .attr("r", 5);
+            });
+        };
+
+        function transformer(dataObj) {
+            var data = dataObj.data.map(function(i) {
+                return {
+                    date: new Date(+i.year, +i.month, 1),
+                    average: i.average_score,
+                    total: i.total_activity
+                };
+            });
+            data.sort(function(a, b) { return a.date - b.date});
+            return {
+                subreddit: dataObj.subreddit,
+                data: data
+            };
+        }
+    };
+
+    directive.link = function($scope, element, $attrs, $http) {
+        
+    };
+
 
     return directive;
 }
