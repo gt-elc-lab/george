@@ -1,7 +1,6 @@
 import networkx as nx
 import community
 from networkx.readwrite import json_graph
-from scipy.stats.stats import pearsonr
 import json
 
 import keyword_extractor

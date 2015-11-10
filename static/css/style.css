@@ -37,6 +37,7 @@
   fill: none;
   stroke: #777;
   shape-rendering: crispEdges;
+  stroke-width: 1px;
 }
 
 .x.axis path {

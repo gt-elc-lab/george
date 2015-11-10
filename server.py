@@ -3,6 +3,7 @@ import os
 import flask
 import datetime
 import pymongo
+import json
 
 from collection.dao import MongoDao
 from collection import models
@@ -131,6 +132,45 @@ def send_word_count(college):
     query = {'_id.college': college}
     word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING).limit(1000)
     return flask.render_template('wordcount.html', college=college, data=word_counts)
+
+@application.route('/bigquery/subreddits')
+def subreddits():
+    db = pymongo.MongoClient('mongodb://45.55.235.216:27017/')['reddit']
+    subreddits = list(db.data_dump.distinct('subreddit'))
+    subreddits.sort()
+    return json.dumps(subreddits)
+
+@application.route('/bigquery/score')
+def bigquery_handler():
+    subreddits = flask.request.args.getlist('subreddits')
+    db = pymongo.MongoClient('mongodb://45.55.235.216:27017/')['reddit']
+
+    match = {'$match': {'subreddit': {'$in': subreddits}}}
+    group = {'$group': {
+         '_id': {
+             'year': {'$year': '$created_utc'},
+             'month': {'$month': '$created_utc'},
+             'subreddit': '$subreddit'
+            },
+        'average_score': {'$avg': '$score'},
+        'total_activity': {'$sum': 1}
+        }
+    }
+    flatten = {'$project': {
+            '_id': 0,
+            'year': '$_id.year',
+            'month': '$_id.month',
+            'subreddit': '$_id.subreddit',
+            'average_score': '$average_score',
+            'total_activity': '$total_activity'
+        }
+    }
+    query_result = db.data_dump.aggregate([match, group, flatten])
+    buckets = collections.defaultdict(list)
+    for doc in query_result:
+        buckets[doc['subreddit']].append(doc)
+    response = [{'subreddit': k, 'data': v} for k, v in buckets.iteritems()]
+    return json.dumps(response)
 
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

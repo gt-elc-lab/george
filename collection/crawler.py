@@ -59,8 +59,11 @@ class RedditApiClient(object):
         Returns:
             a list of praw.comment objects
         """
-        post.replace_more_comments(limit=None, threshold=0)
-        return praw.helpers.flatten_tree(post.comments)
+        try:
+            post.replace_more_comments(limit=None, threshold=0)
+            return praw.helpers.flatten_tree(post.comments)
+        except AssertionError as e:
+            return []
 
     def random_name(self, length=10):
         """

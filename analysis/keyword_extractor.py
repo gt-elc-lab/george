@@ -1,7 +1,7 @@
 import nltk
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from nltk.tag.stanford import StanfordNERTagger
+# from nltk.tag.stanford import StanfordNERTagger
 
 class KeyWordExtractor(object):
 
