@@ -1,7 +1,8 @@
 import nltk
+import os
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from nltk.tag.stanford import NERTagger
+from nltk.tag import StanfordNERTagger
 
 class KeyWordExtractor(object):
 
@@ -57,12 +58,23 @@ class POSTagger(object):
         for sentence in sentences:
             tagged_text = tagged_text + (self._tag_sentence(sentence))
         return [word for (word, tag) in tagged_text if tag.startswith(tag_prefix)]
+        
+    def perform_ner_tagging(self, document):
+        for chunk in nltk.ne_chunk(self.perform_pos_tagging(document)):
+            if hasattr(chunk, 'node'):
+                print chunk.node, ' '.join(c[0] for c in chunk.leaves())
 
 class NER(object):
     """ Performs NER against a given document"""
     
     def __init__(self):
-        self.tagger = NERTagger('/stanford_ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/stanford_ner/stanford-ner.jar')
+        path = os.path.dirname(os.path.abspath(__file__))
+        # nltk.internals.config_java("C:/Program Files/Java/jdk1.8.0_25/bin/java.exe")
+        self.tagger = StanfordNERTagger(path + '/stanford_ner/classifiers/english.all.3class.distsim.crf.ser.gz', path + '/stanford_ner/stanford-ner.jar')
 
-    def perform_ner(self, text):
-        return self.tagger.tag(text)
+    def perform_ner(self, document):
+        sentences = nltk.tokenize.sent_tokenize(document)
+        tagged_text = []
+        for sentence in sentences:
+            tagged_text = tagged_text + self.tagger.tag(nltk.tokenize.word_tokenize(sentence))
+        return tagged_text
