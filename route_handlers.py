@@ -1,7 +1,10 @@
 import threading
 import logging
 import pymongo
+import flask
+import json
 from collections import defaultdict
+from flask.views import MethodView
 
 from analysis.graph import GraphGenerator
 from analysis.suffix_tree import SuffixTree
@@ -262,3 +265,36 @@ class KeywordActivityHandler(RouteHandler):
         pipeline = [match, project, group, sort]
         result = list(self.mongo_dao.post_collection.aggregate(pipeline))
         return list(result)
+
+class BigQueryHandler(MethodView):
+
+    def get(self):
+        subreddits = flask.request.args.getlist('subreddits')
+        db = pymongo.MongoClient('mongodb://45.55.235.216:27017/')['reddit']
+
+        match = {'$match': {'subreddit': {'$in': subreddits}}}
+        group = {'$group': {
+             '_id': {
+                 'year': {'$year': '$created_utc'},
+                 'month': {'$month': '$created_utc'},
+                 'subreddit': '$subreddit'
+                },
+            'average_score': {'$avg': '$score'},
+            'total_activity': {'$sum': 1}
+            }
+        }
+        flatten = {'$project': {
+                '_id': 0,
+                'year': '$_id.year',
+                'month': '$_id.month',
+                'subreddit': '$_id.subreddit',
+                'average_score': '$average_score',
+                'total_activity': '$total_activity'
+            }
+        }
+        query_result = db.data_dump.aggregate([match, group, flatten])
+        buckets = defaultdict(list)
+        for doc in query_result:
+            buckets[doc['subreddit']].append(doc)
+        response = [{'subreddit': k, 'data': v} for k, v in buckets.iteritems()]
+        return json.dumps(response)
