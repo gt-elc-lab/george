@@ -249,7 +249,7 @@ class TrendingKeyWordHandler(MethodView):
         today = datetime.datetime.utcnow()
         today += datetime.timedelta(minutes=int(offset))
         today -= datetime.timedelta(days=int(days_ago))
-        match = {'$match': {'college': college, 'created': {'$gte': date_limit}}}
+        match = {'$match': {'college': college, 'created': {'$gte': today}}}
         project = {'$unwind': '$keywords'}
         group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
         sort = {'$sort': {'total': -1}}
