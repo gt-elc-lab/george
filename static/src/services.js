@@ -68,11 +68,7 @@ function RestService($http) {
     };
 
     service.getWordTree = function(college, term) {
-        var params = {
-            college: college,
-            term: term
-        };
-        return $http.get('/suffixtree', {params: params});
+        return $http.get('/suffixtree/'+college +'/' + term);
     }
 
     service.getCoKeywords = function(college, keyword) {

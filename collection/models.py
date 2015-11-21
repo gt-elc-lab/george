@@ -20,8 +20,7 @@ class Submission(Document):
     keywords = ListField(StringField())
 
     meta = {'allow_inheritance': True,
-            'collection': 'submissions',
-            'indexes': ['$content']
+            'collection': 'submissions'
             }
 
     def get_content(self):

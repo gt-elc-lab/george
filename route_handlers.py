@@ -4,6 +4,7 @@ import pymongo
 import datetime
 import flask
 import json
+import collections
 from collections import defaultdict
 from flask.views import MethodView
 
@@ -17,16 +18,6 @@ logging.basicConfig(level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
-
-
-class RouteHandler(object):
-    """ Abstract class for defining route handlers """
-
-    def __init__(self):
-        self.mongo_dao = MongoDao()
-
-    def execute(self):
-        raise NotImplementedError()
 
 class IndexHandler(MethodView):
     
@@ -92,9 +83,33 @@ class TermFreqHandler(MethodView):
             # get rid of the time field
             end = datetime.datetime(end.year, end.month, end.day)
             start = end - datetime.timedelta(days=30)
+        match = {'$match':
+                     {'college': {'$in': colleges},
+                      'created': {'$gte': start, '$lte': end},
+                      '$text': {'$search': term}}}
+        project = {'$project': {
+                'college': 1,
+                'y': {'$year': '$created'},
+                'm': {'$month': '$created'},
+                'd': {'$dayOfMonth': '$created'}
+        }}
+        group = {'$group': {
+         '_id': {
+             'year': '$y',
+             'month': '$m',
+             'day': '$d',
+             'college': '$college'
+         },
+        'total': {'$sum': 1},
+         }}
+        sort = {'$sort':{
+             '_id.year': -1,
+             '_id.month': -1,
+             '_id.day' : -1
+             }}
         mongo_dao = MongoDao()
-        post_counts = mongo_dao.posts_term_frequency(term, colleges, start, end)
-        formatted_data = map(self.transform, list(post_counts))
+        submission_counts = mongo_dao.db.submissions.aggregate([match, project, group, sort])
+        formatted_data = map(self.transform, list(submission_counts))
         buckets = defaultdict(list)
         # bucket the data by college
         [buckets[point['college']].append(point) for point in formatted_data]
@@ -249,7 +264,7 @@ class TrendingKeyWordHandler(MethodView):
         today = datetime.datetime.utcnow()
         today += datetime.timedelta(minutes=int(offset))
         today -= datetime.timedelta(days=int(days_ago))
-        match = {'$match': {'college': college, 'created': {'$gte': date_limit}}}
+        match = {'$match': {'college': college, 'created': {'$gte': today}}}
         project = {'$unwind': '$keywords'}
         group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
         sort = {'$sort': {'total': -1}}
@@ -282,17 +297,14 @@ class KeyWordTreeHandler(MethodView):
 
 class WordTreeHandler(MethodView):
 
-    def get(self):
-        college = flask.request.args.get('college')
-        term = flask.request.args.get('term')
+    def get(self, college, term):
+        term = term.lower()
         last_week = datetime.datetime.utcnow() - datetime.timedelta(days=90)
-        
-        mongo_dao = MongoDao()
         query = {'college': college,
                 '$text': {'$search': term},
-                'created_utc': {'$gte': last_week}}
-        query_result = mongo_dao.post_collection.find(query)
-        cleaned_text = SuffixTree.clean(term, [doc['body'] for doc in query_result])
+                'created': {'$gte': last_week}}
+        query_result = models.Submission.objects(__raw__=query)
+        cleaned_text = SuffixTree.clean(term, [doc.get_content() for doc in query_result])
         tree = SuffixTree(term)
         for sent in cleaned_text:
             tree.insert(sent)

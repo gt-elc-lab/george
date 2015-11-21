@@ -31,7 +31,7 @@ application.add_url_rule('/todays_posts',
     view_func=route_handlers.TodaysPostsHandler.as_view('todays_posts'))
 
 application.add_url_rule('/wordsearch',
-    view_func=route_handlers.TermFreqHandler.as_view('wordsearch'))
+    view_func=route_handlers.TermFreqHandler.as_view('wordsearch'), methods=['GET'])
     
 application.add_url_rule('/trendinggraph/<college>',
     view_func=route_handlers.GraphHandler.as_view('trendinggraph'))
@@ -48,8 +48,8 @@ application.add_url_rule('/trending',
 application.add_url_rule('/cokeywords',
     view_func=route_handlers.KeyWordTreeHandler.as_view('cokeywords'))
 
-application.add_url_rule('/suffixtree',
-    view_func=route_handlers.WordTreeHandler.as_view('suffixtree'))
+application.add_url_rule('/suffixtree/<college>/<term>',
+    view_func=route_handlers.WordTreeHandler.as_view('suffixtree'), methods=['GET'])
 
 application.add_url_rule('/keyword/activity/<keyword>',
     view_func=route_handlers.KeywordActivityHandler.as_view('keywordactivity'))
