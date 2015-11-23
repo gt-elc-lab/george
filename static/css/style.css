@@ -17,6 +17,11 @@
     padding-left:0;
 }
 
+.pull-right {
+    float: right;
+}
+
+
 .buffer {
     margin: 0px 15px 0px 15px;
 }
@@ -59,6 +64,7 @@
 
 .zero {
     margin: 0px;
+    padding: 0px;
 }
 
 .progress {

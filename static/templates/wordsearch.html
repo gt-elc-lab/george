@@ -1,0 +1,39 @@
+<div class="col-md-12">
+	<div class="col-md-8">
+		<div class="row">
+			<form class="navbar-form navbar-left" role="search">
+				<div class="form-group">
+					<input type="text"
+					class="form-control"
+					placeholder="Search"
+					ng-model="searchTerm">
+				</div>
+				<button type="submit"
+				class="btn btn-default"
+				ng-click="search()">Submit</button>
+			</form>
+			<ul class="nav nav-pills pull-right">
+				<li class="active" data-daysago="7"><a>1 week</a></li>
+				<li data-daysago="14"><a>2 weeks</a></li>
+				<li data-daysago="30"><a>1 month</a></li>
+			</ul>
+			</div>
+			<div
+				class="row"
+				ng-show="vm.searchTerm">
+				<h4>submissions containing: <span class="text-primary">{{vm.searchTerm}}</span></h4>
+				<h5>{{vm.startDate}} - {{vm.endDate}}</h5>
+			</div>
+			<div class="row">
+				<div id="word-search-graph">
+					
+				</div>
+			</div>
+	</div>
+	<div ng-show="vm.toprated.submission" class="col-md-4">
+		<h4>top rated submission</h4>
+		<h5 class="text-primary">{{vm.toprated.date}}</h5>
+		<p>{{vm.toprated.submission.content}}</p>
+		<h5><span class="text-success">{{vm.toprated.submission.ups}}</span> upvotes <span class="text-danger">{{vm.toprated.submission.downs}}</span> downvotes</h5>
+	</div>
+</div>

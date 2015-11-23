@@ -30,8 +30,8 @@ application.add_url_rule('/submissions/keyword/<keyword>/<int:page>',
 application.add_url_rule('/todays_posts',
     view_func=route_handlers.TodaysPostsHandler.as_view('todays_posts'))
 
-application.add_url_rule('/wordsearch',
-    view_func=route_handlers.TermFreqHandler.as_view('wordsearch'), methods=['GET'])
+application.add_url_rule('/wordsearch/<string:college>',
+    view_func=route_handlers.WordSearchView.as_view('wordsearch'), methods=['GET'])
     
 application.add_url_rule('/trendinggraph/<college>',
     view_func=route_handlers.GraphHandler.as_view('trendinggraph'))
@@ -62,3 +62,6 @@ application.add_url_rule('/bigquery/subreddits',
 
 application.add_url_rule('/bigquery/score', 
     view_func=route_handlers.BigQueryScoreHandler.as_view('bigqueryscore'))
+
+application.add_url_rule('/toprated/<string:college>',
+    view_func=route_handlers.TopRatedView.as_view('toprated'))

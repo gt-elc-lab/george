@@ -71,24 +71,20 @@ class TodaysPostsHandler(MethodView):
         return flask.jsonify({'posts':data})
 
 
-class TermFreqHandler(MethodView):
+class WordSearchView(MethodView):
 
-    def get(self):
+    def get(self, college):
         term = flask.request.args.get('term')
-        colleges = flask.request.args.getlist('colleges')
-        start = flask.request.args.get('start')
-        end = flask.request.args.get('end')
-        if not start or not end:
-            end = datetime.datetime.utcnow()
-            # get rid of the time field
-            end = datetime.datetime(end.year, end.month, end.day)
-            start = end - datetime.timedelta(days=30)
+        offset = int(flask.request.args.get('offset'))
+        days_ago = int(flask.request.args.get("elapsedTime"))
+        end = datetime.datetime.utcnow() + datetime.timedelta(minutes=offset)
+
+        start = end - datetime.timedelta(days=days_ago)
         match = {'$match':
-                     {'college': {'$in': colleges},
+                     {'college': college,
                       'created': {'$gte': start, '$lte': end},
                       '$text': {'$search': term}}}
         project = {'$project': {
-                'college': 1,
                 'y': {'$year': '$created'},
                 'm': {'$month': '$created'},
                 'd': {'$dayOfMonth': '$created'}
@@ -98,7 +94,6 @@ class TermFreqHandler(MethodView):
              'year': '$y',
              'month': '$m',
              'day': '$d',
-             'college': '$college'
          },
         'total': {'$sum': 1},
          }}
@@ -108,31 +103,10 @@ class TermFreqHandler(MethodView):
              '_id.day' : -1
              }}
         mongo_dao = MongoDao()
-        submission_counts = mongo_dao.db.submissions.aggregate([match, project, group, sort])
-        formatted_data = map(self.transform, list(submission_counts))
-        buckets = defaultdict(list)
-        # bucket the data by college
-        [buckets[point['college']].append(point) for point in formatted_data]
-        final_form = []
-        for college, data in buckets.iteritems():
-            collision_buckets = {}
-            # First bucket the data point by day.
-            for data_point in data:
-                collision_buckets[data_point['date']] = data_point
-            # Fill in any days that don't appear with a count of 0. This prevents the visualization
-            # from being misleading on the front end.
-            normalized = []
-            period_start = start
-            while period_start <= end:
-                if period_start not in collision_buckets:
-                    normalized.append({'total': 0, 'date': period_start, 'college': college})
-                period_start += datetime.timedelta(days=1)
-            # Grab the actual values.
-            for v in collision_buckets.itervalues():
-                normalized.append(v)
-            normalized.sort(key=lambda x: x['date'])
-            final_form.append({'college': college, 'data': normalized})
-        return flask.jsonify({'data': final_form})
+        pipeline = [match, project, group, sort]
+        query_results = mongo_dao.db.submissions.aggregate(pipeline)
+        return json.dumps(list(query_results))
+        
 
     @staticmethod
     def to_datetime(_id):
@@ -145,17 +119,6 @@ class TermFreqHandler(MethodView):
         date = '{2}-{1}-{0}'.format(
                 _id['year'], _id['month'], _id['day'])
         return datetime.datetime.strptime(date, '%d-%m-%Y')
-
-    def transform(self, data):
-        """
-
-        Args:
-            data (dict):
-        """
-        return {'college': data['_id']['college'],
-                'total': data['total'],
-                'date': self.to_datetime(data['_id'])}
-
 
 class GraphHandler(MethodView):
 
@@ -396,6 +359,22 @@ class BigQueryScoreHandler(MethodView):
             buckets[doc['subreddit']].append(doc)
         response = [{'subreddit': k, 'data': v} for k, v in buckets.iteritems()]
         return json.dumps(response)
+
+class TopRatedView(MethodView):
+
+    def get(self, college):
+        term = flask.request.args.get('term')
+        date = datetime.datetime.strptime(flask.request.args.get('date'), '%a %b %d %Y')
+        date += datetime.timedelta(minutes=int(flask.request.args.get('offset')))
+        end_of_day = date + datetime.timedelta(days=1)
+        query = {
+            'college': college,
+            'created': {'$gte': date, '$lte': end_of_day},
+            '$text': {'$search': term}
+        }
+        highest_scoring = models.Submission.objects(__raw__=query).order_by('-score').limit(1).first()
+        return highest_scoring.to_json()
+
         
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

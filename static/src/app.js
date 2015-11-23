@@ -43,5 +43,11 @@ george.config(function($stateProvider, $urlRouterProvider) {
         controller: 'KeywordController',
         controllerAs: 'keyword',
         resolve: {}
+    })
+    .state('dashboard.wordsearchview', {
+        url: '/wordsearch',
+        templateUrl: '../views/wordsearchview.html',
+        controller: 'WordSearchViewController',
+        controllerAs: 'wordSearchViewController'
     });
 });
