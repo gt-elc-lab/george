@@ -1,10 +1,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt
+*/api_key.txt
+collection/george-key.p12
 # C extensions
 *.so
 daily_job.log
+process.txt
 # Distribution / packaging
 .Python
 env/

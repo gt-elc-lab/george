@@ -20,7 +20,8 @@ SUBREDDITS = [{'name': 'McGill University', 'subreddit': 'mcgill'},
             {'name': 'University of Maryland', 'subreddit': 'UMD'},
             {'name': 'Rochester Institute of Technology', 'subreddit': 'rit'},
             {'name': 'Ohio State University', 'subreddit': 'OSU'},
-            {'name': 'University of San Diego', 'subreddit': 'ucsd'},
+            {'name': 'UC San Diego', 'subreddit': 'ucsd'},
+            {'name': 'University of Missouri', 'subreddit': 'mizzou'},
             {'name': 'University of Georgia', 'subreddit': 'UGA'}]
 
 

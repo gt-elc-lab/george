@@ -4,7 +4,7 @@ import Queue
 import nltk
 from stop_words import get_stop_words
 from vaderSentiment import vaderSentiment
-
+from added_stopwords import added
 from collection import models
 import task
 from analysis.keyword_extractor import KeyWordExtractor, AlchemyApiKeywordExtractor
@@ -24,7 +24,7 @@ class ExtractionTask(task.Task):
         # Having each thread independently load the stop word list causes an error so we just do it
         # here and pass it into the threads.
         stop_words_list = set(
-            nltk.corpus.stopwords.words('english') + get_stop_words('english'))
+            nltk.corpus.stopwords.words('english') + get_stop_words('english') + added)
         for college in query_result:
             worker = ExtractionWorker(college, q, stop_words_list)
             worker.daemon = True

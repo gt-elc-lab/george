@@ -5,6 +5,7 @@ from nltk.tag.stanford import StanfordNERTagger
 from alchemyapi_python.alchemyapi import AlchemyAPI
 
 class AlchemyApiKeywordExtractor(object):
+
     def __init__(self):
         return
 
@@ -20,6 +21,7 @@ class AlchemyApiKeywordExtractor(object):
                 keywords.append(set())
                 print('Error in keyword extraction call')
         return keywords
+
 
 class KeyWordExtractor(object):
 
