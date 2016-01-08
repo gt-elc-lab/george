@@ -2,6 +2,24 @@ import nltk
 from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.tag.stanford import StanfordNERTagger
+from alchemyapi_python.alchemyapi import AlchemyAPI
+
+class AlchemyApiKeywordExtractor(object):
+    def __init__(self):
+        return
+
+    @staticmethod
+    def get_keywords(documents, text_accessor=lambda x: x):
+        alchemy_api = AlchemyAPI()
+        keywords = []
+        for document in documents:
+            response = alchemy_api.keywords('text', text_accessor(document), {'sentiment': 1})
+            if response['status'] == 'OK' and response['keywords']:
+                keywords.append(set(map(lambda x: x['text'], response['keywords'])))
+            else:
+                keywords.append(set())
+                print('Error in keyword extraction call')
+        return keywords
 
 class KeyWordExtractor(object):
 

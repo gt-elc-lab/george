@@ -1,7 +1,7 @@
 from mongoengine import *
 import config
 
-connect('reddit', host=config.TEST_DB_URI)
+connect('reddit', host=config.PROD_HOST, port=config.PROD_PORT)
 
 class Submission(Document):
     r_id = StringField(primary_key=True)

@@ -1,6 +1,8 @@
 PRODUCTION = False
 TEST_DB_URI = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
 TEST_DB_NAME = 'redditdump'
+PROD_HOST = '45.55.235.216'
+PROD_PORT = 27017
 SUBREDDITS = [{'name': 'McGill University', 'subreddit': 'mcgill'},
             {'name': 'Georgia Tech', 'subreddit': 'gatech'},
             {'name': 'UT Austin', 'subreddit': 'UTAustin'},
