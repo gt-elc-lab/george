@@ -1,7 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-
+*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt*/api_key.txt
 # C extensions
 *.so
 daily_job.log
