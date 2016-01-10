@@ -4,6 +4,18 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.tag.stanford import StanfordNERTagger
 from alchemyapi_python.alchemyapi import AlchemyAPI
 
+class AlchemyApiService(object):
+
+    def __init__(self):
+        self.alchemy_api = AlchemyAPI()
+
+    def get_keywords(self, text):
+        response = self.alchemy_api.keywords('text', text)
+        if response['status'] == 'OK' and response['keywords']:
+            return list(set(x['text'] for x in response['keywords']))
+        print('Error in keyword extraction call')
+        return []
+
 class AlchemyApiKeywordExtractor(object):
 
     def __init__(self):
@@ -21,6 +33,13 @@ class AlchemyApiKeywordExtractor(object):
                 keywords.append(set())
                 print('Error in keyword extraction call')
         return keywords
+
+    def _send_request(text):
+        response = alchemy_api.keywords('text', text_accessor(document), {'sentiment': 1})
+        if response['status'] == 'OK' and response['keywords']:
+            return set(map(lambda x: x['text'], response['keywords']))
+        print('Error in keyword extraction call')
+        return set()
 
 
 class KeyWordExtractor(object):

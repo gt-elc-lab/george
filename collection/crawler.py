@@ -10,7 +10,7 @@ import re
 import models
 from datetime import datetime, timedelta
 from Queue import Queue
-from analysis import sentiment_analysis
+from analysis import sentiment_analysis, keyword_extractor
 
 logging.basicConfig(level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -127,9 +127,9 @@ class RedditWorker(threading.Thread):
             	# for relatively new posts.
                 end_date -= timedelta(hours=6)
             else:
-                # The college is not in the database so just get the last month
+                # The college is not in the database so just get the last weeks
                 # worth of data.
-                end_date = start_date - timedelta(weeks=4)
+                end_date = start_date - timedelta(weeks=1)
             self.crawl(college_info, start_date, end_date)
             logger.info('Finished {} from {} to {}'.format(
                 college_info['name'], start_date, end_date))
@@ -205,6 +205,7 @@ class MongoDBService(object):
     def __init__(self):
         self.dao = dao.MongoDao()
         self.sentiment = sentiment_analysis.SentimentHelper()
+        self.alchemy_api_service = keyword_extractor.AlchemyApiService()
 
     def save(self, posts, college_info, get_comments):
         """
@@ -220,16 +221,28 @@ class MongoDBService(object):
         comment_count = 0
         for post in posts:
             post_model = self.serialize_post(post, college_info)
-            post_model.save()
             comment_models = [self.serialize_comment(comment, college_info) for comment in get_comments(post)]
             for comment in comment_models:
-                comment.save()
+                self.save_and_update_keywords(comment)
             post_model.comments = comment_models
-            post_model.save()
+            self.save_and_update_keywords(post_model)
             post_count += 1
             comment_count += len(comment_models)
         logger.info('Saved: {} {} posts {} comments'.format(
             college_info['name'], post_count, comment_count))
+        return
+
+    def save_and_update_keywords(self, model):
+        """
+        Gets keywords for model if needed, then persists the model.
+
+        Args:
+            model (mongoengine model)
+        """
+        if model.content and not model.keywords:
+            model.keywords = self.alchemy_api_service.get_keywords(
+                model.content)
+        model.save()
         return
 
     def last_post_date(self, college_info):
