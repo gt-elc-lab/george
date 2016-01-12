@@ -129,7 +129,12 @@ class RedditWorker(threading.Thread):
             else:
                 # The college is not in the database so just get the last weeks
                 # worth of data.
-                end_date = start_date - timedelta(weeks=1)
+
+                # NOTE(simplyfaisal): Ideally we should go further back than 12
+                # hours. However AlchemyAPI only gives us 1000 requests per day
+                # and we would most likely exceed the limit if we crawled any
+                # further back.
+                end_date = start_date - timedelta(hours=12)
             self.crawl(college_info, start_date, end_date)
             logger.info('Finished {} from {} to {}'.format(
                 college_info['name'], start_date, end_date))
@@ -241,7 +246,7 @@ class MongoDBService(object):
         """
         if model.content and not model.keywords:
             model.keywords = self.alchemy_api_service.get_keywords(
-                model.content)
+                model.content.lower())
         model.save()
         return
 

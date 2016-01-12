@@ -3,7 +3,8 @@ TEST_DB_URI = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
 TEST_DB_NAME = 'redditdump'
 PROD_HOST = '45.55.235.216'
 PROD_PORT = 27017
-SUBREDDITS = [{'name': 'McGill University', 'subreddit': 'mcgill'},
+SUBREDDITS = [
+            {'name': 'McGill University', 'subreddit': 'mcgill'},
             {'name': 'Georgia Tech', 'subreddit': 'gatech'},
             {'name': 'UT Austin', 'subreddit': 'UTAustin'},
             {'name': 'Penn State University', 'subreddit': 'PennStateUniversity'},
@@ -22,10 +23,6 @@ SUBREDDITS = [{'name': 'McGill University', 'subreddit': 'mcgill'},
             {'name': 'Ohio State University', 'subreddit': 'OSU'},
             {'name': 'UC San Diego', 'subreddit': 'ucsd'},
             {'name': 'University of Missouri', 'subreddit': 'mizzou'},
-            {'name': 'University of Georgia', 'subreddit': 'UGA'}]
+            {'name': 'University of Georgia', 'subreddit': 'UGA'}
+      ]
 
-
-CREDENTIALS = ('elc-gt', 'password')
-CREDENTIALS_LIST = [ ('gt-elc', 'password'),
-                ('elc-gt', 'password'),
-                ('elc-gt3', 'wallmoose17')]
