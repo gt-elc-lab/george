@@ -2,6 +2,8 @@ import networkx as nx
 import community
 from networkx.readwrite import json_graph
 import json
+import collections
+import itertools
 
 import keyword_extractor
 
@@ -10,6 +12,34 @@ class GraphGenerator(object):
 
     def __init__(self):
         return
+
+    @staticmethod
+    def build_topic_graph(documents):
+        G = nx.Graph()
+        # used to keep track of and increment the number of connections that
+        # exist between any two keywords
+        edge_weights = collections.Counter()
+
+        keyword_frequencies = collections.Counter(
+            [keyword for document in documents for keyword in document.keywords])
+        for document in documents:
+            for keyword in document.keywords:
+                G.add_node(keyword, frequency=keyword_frequencies[keyword])
+            # Its alright to just add the keywords without checking if it is
+            # already in the graph. NetworkX doesn't modify the graph if that
+            # is the case.
+            G.add_nodes_from(document.keywords)
+            edges = itertools.combinations(document.keywords, 2)
+            for edge in edges:
+                # unlike sets frozensets are hashable
+                _set = frozenset(edge)
+                edge_weights[_set] += 1
+                x, y = edge
+                G.add_edge(x, y, weight=edge_weights[_set])
+        for node in G.nodes():
+            if keyword_frequencies[node] < 2:
+                G.remove_node(node)
+        return json_graph.node_link_data(G)
 
     @staticmethod
     def _with_networkx(documents, threshold=1):

@@ -20,21 +20,21 @@ logging.getLogger('requests').setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
 class IndexHandler(MethodView):
-    
+
     def get(self):
         return flask.render_template('index.html')
 
-        
+
 class CollegesHandler(MethodView):
-    
+
     def get(self):
         colleges = models.Submission.objects.distinct('college')
         colleges.sort()
         return flask.jsonify({'colleges': colleges})
-        
-        
+
+
 class SubmissionHandler(MethodView):
-    
+
     def get(self, post_id):
         return flask.jsonify(data=models.Submission.objects.get(r_id=post_id).to_json())
 
@@ -106,7 +106,7 @@ class WordSearchView(MethodView):
         pipeline = [match, project, group, sort]
         query_results = mongo_dao.db.submissions.aggregate(pipeline)
         return json.dumps(list(query_results))
-        
+
 
     @staticmethod
     def to_datetime(_id):
@@ -139,7 +139,7 @@ class DailyActivitySummaryHandler(MethodView):
         college = flask.request.args.get('college')
         offset = flask.request.args.get('offset')
         today = get_today_from_offset(offset)
-        
+
         mongo_dao = MongoDao()
         match = {'$match': {
                 'college': college,
@@ -217,7 +217,7 @@ class ActivityHandler(MethodView):
             formatted_data.append(data_point)
         return flask.jsonify(data=formatted_data)
 
-        
+
 class TrendingKeyWordHandler(MethodView):
 
     def get(self):
@@ -237,7 +237,7 @@ class TrendingKeyWordHandler(MethodView):
         data = map(format_output, query_result)
         return flask.jsonify(data=data)
 
-        
+
 class KeyWordTreeHandler(MethodView):
 
     def get(self):
@@ -272,13 +272,13 @@ class WordTreeHandler(MethodView):
         for sent in cleaned_text:
             tree.insert(sent)
         return flask.jsonify(data=tree.to_json())
-        
-        
+
+
 class KeywordActivityHandler(MethodView):
 
     def get(self, keyword):
         college = flask.request.args.get('college')
-        
+
         mongo_dao = MongoDao()
         week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         week_ago.replace(hour=0, minute=0, second=0)
@@ -308,7 +308,7 @@ class KeywordActivityHandler(MethodView):
         result = list(mongo_dao.post_collection.aggregate(pipeline))
         return flask.json.dumps(list(result))
 
-        
+
 class WordCountHandler(MethodView):
 
     def get(self, college):
@@ -316,8 +316,8 @@ class WordCountHandler(MethodView):
         query = {'_id.college': college}
         word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING).limit(1000)
         return flask.render_template('wordcount.html', college=college, data=word_counts)
-        
-        
+
+
 class BigQuerySubredditsHandler(MethodView):
 
     def get(self):
@@ -325,7 +325,7 @@ class BigQuerySubredditsHandler(MethodView):
         subreddits = list(db.data_dump.distinct('subreddit'))
         subreddits.sort()
         return json.dumps(subreddits)
-        
+
 
 class BigQueryScoreHandler(MethodView):
 
@@ -375,7 +375,22 @@ class TopRatedView(MethodView):
         highest_scoring = models.Submission.objects(__raw__=query).order_by('-score').limit(1).first()
         return highest_scoring.to_json()
 
-        
+class TopicGraphHandler(MethodView):
+
+    def get(self, college):
+        date_filter = flask.request.args.get('date_filter')
+        if not date_filter:
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+        else:
+            date_filter = json_to_date(date_filter)
+        submissions = models.Submission.objects(college=college, created__gte=date_filter)
+        graph = GraphGenerator.build_topic_graph(submissions)
+        return flask.jsonify(data=graph)
+
+
+def json_to_date(date_string):
+    return datetime.datetime.strptime(date_string, "%a, %d %b %Y %H:%M:%S %Z")
+
 def get_today_from_offset(offset):
     today = datetime.datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today += datetime.timedelta(minutes=int(offset))
