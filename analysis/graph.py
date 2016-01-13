@@ -35,7 +35,8 @@ class GraphGenerator(object):
                 _set = frozenset(edge)
                 edge_weights[_set] += 1
                 x, y = edge
-                G.add_edge(x, y, weight=edge_weights[_set])
+                if edge_weights[_set] > 1:
+                    G.add_edge(x, y, weight=edge_weights[_set])
         for node in G.nodes():
             if keyword_frequencies[node] < 2:
                 G.remove_node(node)

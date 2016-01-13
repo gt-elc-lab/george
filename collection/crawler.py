@@ -209,7 +209,6 @@ class MongoDBService(object):
 
     def __init__(self):
         self.dao = dao.MongoDao()
-        self.sentiment = sentiment_analysis.SentimentHelper()
         self.alchemy_api_service = keyword_extractor.AlchemyApiService()
 
     def save(self, posts, college_info, get_comments):
@@ -244,9 +243,16 @@ class MongoDBService(object):
         Args:
             model (mongoengine model)
         """
-        if model.content and not model.keywords:
-            model.keywords = self.alchemy_api_service.get_keywords(
-                model.content.lower())
+        if model.content:
+            if not model.pos:
+                sentiment = sentiment.SentimentHelper.compute_sentiment(
+                document.content)
+                model.pos = sentiment['pos']
+                mode.neg = sentiment['neg']
+                model.neu = sentiment['neu']
+            if not model.keywords:
+                model.keywords = self.alchemy_api_service.get_keywords(
+                    model.content.lower())
         model.save()
         return
 

@@ -14,6 +14,6 @@ class SentimentHelper(object):
             text (str) : text on which sentiment analysis will be computed
 
         Returns:
-            dictionary of sentiment scores 
+            dictionary of sentiment scores
         """
         return vader(text.encode('utf8'))

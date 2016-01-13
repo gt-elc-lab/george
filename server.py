@@ -39,5 +39,8 @@ application.add_url_rule('/cokeywords',
 application.add_url_rule('/keyword/activity/<keyword>',
     view_func=route_handlers.KeywordActivityHandler.as_view('keywordactivity'))
 
+application.add_url_rule('/sentiment/<keyword>',
+    view_func=route_handlers.SentimentTableHandler.as_view('sentiment'))
+
 application.add_url_rule('/topicgraph/<string:college>',
     view_func=route_handlers.TopicGraphHandler.as_view('topicgraph'))
