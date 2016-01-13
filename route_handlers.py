@@ -53,24 +53,6 @@ class KeywordSubmissionHandler(MethodView):
         #data = [models.Post.from_json(doc).to_json() for doc in query_result]
         return flask.jsonify(data=data)
 
-
-class TodaysPostsHandler(MethodView):
-
-    def get(self):
-        college = flask.request.args.get('college')
-        offset = flask.request.args.get('offset')
-        today = get_today_from_offset(int(offset))
-        mongo_dao = MongoDao()
-        query = {
-            'college': college,
-            'created_utc': {'$gte': today},
-            'stype': 'POST'
-        }
-        query_result = mongo_dao.post_collection.find(query)
-        data = map(lambda x: models.Post.from_record(x).to_json(), list(query_result))
-        return flask.jsonify({'posts':data})
-
-
 class WordSearchView(MethodView):
 
     def get(self, college):
@@ -119,50 +101,6 @@ class WordSearchView(MethodView):
         date = '{2}-{1}-{0}'.format(
                 _id['year'], _id['month'], _id['day'])
         return datetime.datetime.strptime(date, '%d-%m-%Y')
-
-class GraphHandler(MethodView):
-
-    def get(self, college):
-        start = flask.request.args.get('start')
-        end = flask.request.args.get('end')
-        if not start or not end:
-           start = datetime.datetime.utcnow() - datetime.timedelta(days=1)
-        documents = models.Submission.objects(college=college, keywords__exists=True, created__gte=start)
-        if documents:
-            data = GraphGenerator._with_networkx(documents)
-            return flask.jsonify(data)
-
-
-class DailyActivitySummaryHandler(MethodView):
-
-    def get(self):
-        college = flask.request.args.get('college')
-        offset = flask.request.args.get('offset')
-        today = get_today_from_offset(offset)
-
-        mongo_dao = MongoDao()
-        match = {'$match': {
-                'college': college,
-                'created_utc': {'$gte': today}
-        }}
-        group = {'$group': {
-            '_id': '$stype',
-            'activity': {'$sum': 1},
-        }}
-        pipeline = [match, group]
-        query_result = mongo_dao.post_collection.aggregate(pipeline)
-        counts = defaultdict(int)
-        for _type in query_result:
-            counts[_type['_id']] = _type['activity']
-
-        data = {
-            "activity": {
-                "posts": counts["POST"],
-                "comments": counts["COMMENT"]
-            }
-        }
-        return flask.jsonify(data)
-
 
 class ActivityHandler(MethodView):
 
@@ -217,27 +155,6 @@ class ActivityHandler(MethodView):
             formatted_data.append(data_point)
         return flask.jsonify(data=formatted_data)
 
-
-class TrendingKeyWordHandler(MethodView):
-
-    def get(self):
-        college = flask.request.args.get('college')
-        offset = flask.request.args.get('offset')
-        days_ago = flask.request.args.get('days_ago')
-        today = datetime.datetime.utcnow()
-        today += datetime.timedelta(minutes=int(offset))
-        today -= datetime.timedelta(days=int(days_ago))
-        match = {'$match': {'college': college, 'created': {'$gte': today}}}
-        project = {'$unwind': '$keywords'}
-        group = {'$group': {'_id': '$keywords', 'total': {'$sum': 1}}}
-        sort = {'$sort': {'total': -1}}
-        limit = {'$limit': 10}
-        query_result = models.Submission.objects.aggregate(match, project, group, sort, limit)
-        format_output = lambda x: {'keyword': x['_id'], 'total': x['total']}
-        data = map(format_output, query_result)
-        return flask.jsonify(data=data)
-
-
 class KeyWordTreeHandler(MethodView):
 
     def get(self):
@@ -256,23 +173,6 @@ class KeyWordTreeHandler(MethodView):
             'children': filter(lambda x: x['name'] != keyword, formatted_output)
         }
         return flask.jsonify(data=data)
-
-
-class WordTreeHandler(MethodView):
-
-    def get(self, college, term):
-        term = term.lower()
-        last_week = datetime.datetime.utcnow() - datetime.timedelta(days=90)
-        query = {'college': college,
-                '$text': {'$search': term},
-                'created': {'$gte': last_week}}
-        query_result = models.Submission.objects(__raw__=query)
-        cleaned_text = SuffixTree.clean(term, [doc.get_content() for doc in query_result])
-        tree = SuffixTree(term)
-        for sent in cleaned_text:
-            tree.insert(sent)
-        return flask.jsonify(data=tree.to_json())
-
 
 class KeywordActivityHandler(MethodView):
 
@@ -308,73 +208,6 @@ class KeywordActivityHandler(MethodView):
         result = list(mongo_dao.post_collection.aggregate(pipeline))
         return flask.json.dumps(list(result))
 
-
-class WordCountHandler(MethodView):
-
-    def get(self, college):
-        word_count_db = pymongo.MongoClient('mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump')['redditdump']['wordcount']
-        query = {'_id.college': college}
-        word_counts = word_count_db.find(query).sort('value', pymongo.DESCENDING).limit(1000)
-        return flask.render_template('wordcount.html', college=college, data=word_counts)
-
-
-class BigQuerySubredditsHandler(MethodView):
-
-    def get(self):
-        db = pymongo.MongoClient('mongodb://45.55.235.216:27017/')['reddit']
-        subreddits = list(db.data_dump.distinct('subreddit'))
-        subreddits.sort()
-        return json.dumps(subreddits)
-
-
-class BigQueryScoreHandler(MethodView):
-
-    def get(self):
-        subreddits = flask.request.args.getlist('subreddits')
-        db = pymongo.MongoClient('mongodb://45.55.235.216:27017/')['reddit']
-
-        match = {'$match': {'subreddit': {'$in': subreddits}}}
-        group = {'$group': {
-             '_id': {
-                 'year': {'$year': '$created_utc'},
-                 'month': {'$month': '$created_utc'},
-                 'subreddit': '$subreddit'
-                },
-            'average_score': {'$avg': '$score'},
-            'total_activity': {'$sum': 1}
-            }
-        }
-        flatten = {'$project': {
-                '_id': 0,
-                'year': '$_id.year',
-                'month': '$_id.month',
-                'subreddit': '$_id.subreddit',
-                'average_score': '$average_score',
-                'total_activity': '$total_activity'
-            }
-        }
-        query_result = db.data_dump.aggregate([match, group, flatten])
-        buckets = defaultdict(list)
-        for doc in query_result:
-            buckets[doc['subreddit']].append(doc)
-        response = [{'subreddit': k, 'data': v} for k, v in buckets.iteritems()]
-        return json.dumps(response)
-
-class TopRatedView(MethodView):
-
-    def get(self, college):
-        term = flask.request.args.get('term')
-        date = datetime.datetime.strptime(flask.request.args.get('date'), '%a %b %d %Y')
-        date += datetime.timedelta(minutes=int(flask.request.args.get('offset')))
-        end_of_day = date + datetime.timedelta(days=1)
-        query = {
-            'college': college,
-            'created': {'$gte': date, '$lte': end_of_day},
-            '$text': {'$search': term}
-        }
-        highest_scoring = models.Submission.objects(__raw__=query).order_by('-score').limit(1).first()
-        return highest_scoring.to_json()
-
 class TopicGraphHandler(MethodView):
 
     def get(self, college):
@@ -385,7 +218,7 @@ class TopicGraphHandler(MethodView):
             date_filter = json_to_date(date_filter)
         submissions = models.Submission.objects(college=college, created__gte=date_filter)
         graph = GraphGenerator.build_topic_graph(submissions)
-        return flask.jsonify(data=graph)
+        return json.dumps(graph)
 
 
 def json_to_date(date_string):

@@ -1,7 +1,6 @@
 var george = angular.module('george');
 
 george.factory('RestService', RestService);
-george.factory('ColorHashService', ColorHashService);
 
 RestService.$inject = ['$http'];
 function RestService($http) {
@@ -36,41 +35,6 @@ function RestService($http) {
         return $http.get('/wordsearch', { params: params });
     };
 
-    service.getTrendingGraph = function(college) {
-        return $http.get('/trendinggraph/' + college);
-    };
-
-    service.getTodaysActivitySummary = function(college) {
-        var params = {
-            college: college,
-            offset : offset
-        };
-        return $http.get('/daily', {params: params, cache: true});
-    };
-
-    service.getTrendingKeywords = function(college, dayLimit) {
-        var params = {
-            college: college,
-            days_ago: dayLimit,
-            offset: offset
-        };
-        return $http.get('/trending', {params: params, cache: true});
-    };
-
-    service.getActivity = function(college, dayLimit) {
-        var params = {
-            college: college,
-            days_ago: dayLimit,
-            offset: offset
-        };
-
-        return $http.get('/activity', {params: params, cache: true});
-    };
-
-    service.getWordTree = function(college, term) {
-        return $http.get('/suffixtree/'+college +'/' + term);
-    }
-
     service.getCoKeywords = function(college, keyword) {
         var params = {
             college: college,
@@ -78,32 +42,6 @@ function RestService($http) {
         };
         return $http.get('/cokeywords', {params: params});
     }
-    return service;
-}
-
-function ColorHashService() {
-    var service = {};
-
-    service.colorFromString = function(string) {
-        return rgbFromInt(hash(string));
-    };
-
-    function hash(string) {
-        var hash = 0;
-        string.split('').forEach(function(ch, i) {
-            hash = ch.charCodeAt(0) + ((hash << 5) - hash);
-        });
-        return hash;
-    }
-
-    function rgbFromInt(n) {
-        var c = (n & 0x00FFFFFF)
-        .toString(16)
-        .toUpperCase();
-
-        return '#' + "00000".substring(0, 6 - c.length) + c;
-    }
-
     return service;
 }
 

@@ -17,37 +17,14 @@ george.config(function($stateProvider, $urlRouterProvider) {
             }
         }
     })
-    .state('dashboard', {
-        url: '/:college/dashboard',
-        templateUrl: '../views/dashboard.html',
-        controller: 'DashboardController',
-        controllerAs: 'dashboard',
+    .state('main', {
+        url: '/main/:college',
+        templateUrl: 'src/main/main-template.html',
+        controller: 'ShellController',
+        controllerAs: 'shell'
     })
-    .state('dashboard.summary', {
-        url: '/summary',
-        templateUrl: '../views/summary.html',
-        controller: 'SummaryController',
-        controllerAs: 'summary',
-        resolve: {
-            activity: function(RestService, $stateParams) {
-                return RestService.getTodaysActivitySummary($stateParams.college)
-                    .then(function(response) {
-                        return response.data.activity;
-                    });
-            }
-        }
-    })
-    .state('dashboard.keyword', {
-        url: '/keyword/:keyword',
-        templateUrl: '../views/keyword.html',
-        controller: 'KeywordController',
-        controllerAs: 'keyword',
-        resolve: {}
-    })
-    .state('dashboard.wordsearchview', {
-        url: '/wordsearch',
-        templateUrl: '../views/wordsearchview.html',
-        controller: 'WordSearchViewController',
-        controllerAs: 'wordSearchViewController'
+    .state('main.dashboard', {
+        url: '/dashboard',
+        templateUrl: 'src/dashboard/dashboard-template.html'
     });
 });

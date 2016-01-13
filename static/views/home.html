@@ -15,7 +15,7 @@
             </div>
             <div>
                 <div ng-repeat="college in home.colleges" class="col-md-4">
-                    <a ui-sref="dashboard.summary({college: college})" class="invert-on-hover">
+                    <a ui-sref="main.dashboard({college: college})" class="invert-on-hover">
                         <div class="panel panel-default">
                             <div class="panel-body text-center">
                                 {{college}}
@@ -25,10 +25,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="row">
-        <bigquery-graph></bigquery-graph>
     </div>
 
     <!--  -->

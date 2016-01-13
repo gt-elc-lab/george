@@ -27,45 +27,17 @@ application.add_url_rule('/submissions/<post_id>',
 application.add_url_rule('/submissions/keyword/<keyword>/<int:page>',
     view_func=route_handlers.KeywordSubmissionHandler.as_view('submissionkeywords'))
 
-application.add_url_rule('/todays_posts',
-    view_func=route_handlers.TodaysPostsHandler.as_view('todays_posts'))
-
 application.add_url_rule('/wordsearch/<string:college>',
     view_func=route_handlers.WordSearchView.as_view('wordsearch'), methods=['GET'])
-
-application.add_url_rule('/trendinggraph/<college>',
-    view_func=route_handlers.GraphHandler.as_view('trendinggraph'))
-
-application.add_url_rule('/daily',
-    view_func=route_handlers.DailyActivitySummaryHandler.as_view('daily'))
 
 application.add_url_rule('/activity',
     view_func=route_handlers.ActivityHandler.as_view('activity'))
 
-application.add_url_rule('/trending',
-    view_func=route_handlers.TrendingKeyWordHandler.as_view('trending'))
-
 application.add_url_rule('/cokeywords',
     view_func=route_handlers.KeyWordTreeHandler.as_view('cokeywords'))
 
-application.add_url_rule('/suffixtree/<college>/<term>',
-    view_func=route_handlers.WordTreeHandler.as_view('suffixtree'), methods=['GET'])
-
 application.add_url_rule('/keyword/activity/<keyword>',
     view_func=route_handlers.KeywordActivityHandler.as_view('keywordactivity'))
-
-application.add_url_rule('/wordcount/<college>',
-    view_func=route_handlers.WordCountHandler.as_view('wordcount'))
-
-application.add_url_rule('/bigquery/subreddits',
-    view_func=route_handlers.BigQuerySubredditsHandler.as_view('bigquerysubreddits'))
-
-application.add_url_rule('/bigquery/score',
-    view_func=route_handlers.BigQueryScoreHandler.as_view('bigqueryscore'))
-
-application.add_url_rule('/toprated/<string:college>',
-    view_func=route_handlers.TopRatedView.as_view('toprated'))
-
 
 application.add_url_rule('/topicgraph/<string:college>',
     view_func=route_handlers.TopicGraphHandler.as_view('topicgraph'))

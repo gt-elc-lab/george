@@ -20,7 +20,7 @@ function SummaryController($stateParams, activity) {
 }
 
 function DashboardController($scope, $stateParams) {
-    this.vm = {}
+    this.vm = {};
     this.vm.college = $stateParams.college;
 
     $scope.$on('$stateChangeSuccess',
