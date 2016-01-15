@@ -10,10 +10,16 @@ class AlchemyApiService(object):
         self.alchemy_api = AlchemyAPI()
 
     def get_keywords(self, text):
-        response = self.alchemy_api.keywords('text', text)
-        if response['status'] == 'OK' and response['keywords']:
-            return list(set(x['text'] for x in response['keywords']))
-        print('Error in keyword extraction call')
+        # TODO(simplyfaisal): Refine error handling logic.
+        try:
+            response = self.alchemy_api.keywords('text', text)
+            if response['status'] == 'OK' and response['keywords']:
+                return list(set(x['text'] for x in response['keywords']))
+            else:
+                print ('Error in keyword extraction')
+                print response
+        except Exception as e:
+            print e
         return []
 
 class AlchemyApiKeywordExtractor(object):

@@ -245,10 +245,10 @@ class MongoDBService(object):
         """
         if model.content:
             if not model.pos:
-                sentiment = sentiment.SentimentHelper.compute_sentiment(
-                document.content)
+                sentiment = sentiment_analysis.SentimentHelper.compute_sentiment(
+                    model.content)
                 model.pos = sentiment['pos']
-                mode.neg = sentiment['neg']
+                model.neg = sentiment['neg']
                 model.neu = sentiment['neu']
             if not model.keywords:
                 model.keywords = self.alchemy_api_service.get_keywords(

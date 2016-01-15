@@ -183,26 +183,14 @@ class KeywordActivityHandler(MethodView):
         week_ago.replace(hour=0, minute=0, second=0)
         match = {'$match': {'college': college,
                             'keywords': keyword,
-                            'created': {'$gt': week_ago}}}
-        project = {'$project': {
-                'y': {'$year': '$created'},
-                'm': {'$month': '$created'},
-                'd': {'$dayOfMonth': '$created'},
-        }}
+                            'created': {'$gt': week_ago}
+                            }
+                }
         group = {'$group': {
-         '_id': {
-             'year': '$y',
-             'month': '$m',
-             'day': '$d',
-         },
-        'total': {'$sum': 1},
-         }}
-        sort = {'$sort':{
-             '_id.year': -1,
-             '_id.month': -1,
-             '_id.day' : -1,
-             }}
-        pipeline = [match, project, group, sort]
+            '_id': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$created' }},
+            'total': {'$sum': 1}
+        }}
+        pipeline = [match, group]
         result = models.Submission.objects.aggregate(*pipeline)
         return flask.json.dumps(list(result))
 
@@ -222,35 +210,20 @@ class SentimentTableHandler(MethodView):
 
     def get(self, keyword):
         college = flask.request.args.get('college')
-
         week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         week_ago.replace(hour=0, minute=0, second=0)
         match = {'$match': {'college': college,
                             'keywords': keyword,
                             'created': {'$gt': week_ago}}}
-        project = {'$project': {
-                'y': {'$year': '$created'},
-                'm': {'$month': '$created'},
-                'd': {'$dayOfMonth': '$created'},
-        }}
         group = {'$group': {
-         '_id': {
-             'year': '$y',
-             'month': '$m',
-             'day': '$d',
-         },
-        'pos': {'$avg': '$pos'},
-        'neg': {'$avg': '$neg'},
-        'neu': {'$avg': '$neu'}
-         }}
-        sort = {'$sort':{
-             '_id.year': -1,
-             '_id.month': -1,
-             '_id.day' : -1,
-             }}
-        pipeline = [match, project, group, sort]
+            '_id': None,
+            'pos': {'$avg': '$pos'},
+            'neg': {'$avg': '$neg'},
+            'neu': {'$avg': '$neu'}
+        }}
+        pipeline = [match, group]
         result = models.Submission.objects.aggregate(*pipeline)
-        return flask.json.dumps(list(result))
+        return flask.json.dumps(list(result)[0])
 
 
 def json_to_date(date_string):
