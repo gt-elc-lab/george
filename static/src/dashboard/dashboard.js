@@ -7,9 +7,10 @@ george.directive('keywordFrequencyGraph', KeywordFrequencyGraph);
 george.directive('sentimentTable', SentimentTable);
 
 george.service('TopicNotifier', TopicNotifier);
+george.factory('TooltipFactory', TooltipFactory);
 
-TopicGraph.$inject = ['$http', '$stateParams', 'TopicNotifier'];
-function TopicGraph($http, $stateParams, TopicNotifier) {
+TopicGraph.$inject = ['$http', '$stateParams', 'TopicNotifier', 'TooltipFactory'];
+function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
@@ -36,28 +37,33 @@ function TopicGraph($http, $stateParams, TopicNotifier) {
                 var force = d3.layout.force()
                     .nodes(data.nodes)
                     .links(data.links)
-                    .linkDistance(60)
+                    .linkDistance(80)
                     .charge(-80)
                     .size([w, h])
                     .start();
 
                 var frequencyScale = d3.scale.linear()
                     .domain(d3.extent(data.nodes, function(d) {return Math.sqrt(d.frequency)}))
-                    .range([5, 25]);
+                    .range([10, 35]);
 
                 var edgeWeightScale = d3.scale.linear()
                     .domain(d3.extent(data.links, function(d) {return d.weight}))
-                    .range([3, 15]);
+                    .range([5, 20]);
 
                 function radius(n) {
                     return frequencyScale(Math.sqrt(n));
                 }
 
+                var bubbleTip = TooltipFactory.getToolTip('bubble-tooltip.html');
+                var edgeTip = TooltipFactory.getToolTip('edge-tooltip.html');
+                svg.call(bubbleTip);
+                svg.call(edgeTip);
+
                 var edges = svg.selectAll('line')
                     .data(data.links)
                     .enter()
                     .append('line')
-                    .style('stroke', '#ccc')
+                    .style('stroke', '#ff9800')
                     .style('stroke-width', function(d) {
                         return edgeWeightScale(d.weight) + 'px';
                     })
@@ -73,6 +79,23 @@ function TopicGraph($http, $stateParams, TopicNotifier) {
                     .attr("y2", function(d) {
                         return d.target.y;
                     });
+
+                edges.on('mouseover', edgesMouseOverHandler);
+                edges.on('mouseout', edgesMouseOutHandler);
+
+                function edgesMouseOverHandler(d, i) {
+                    edgeTip.show(d);
+                    d3.select(this).style({
+                      'stroke-width':  edgeWeightScale(d.weight) * 2
+                    });
+                }
+
+                function edgesMouseOutHandler(d, i) {
+                    edgeTip.hide(d);
+                    d3.select(this).style({
+                      'stroke-width':  edgeWeightScale(d.weight)
+                    });
+                }
 
                 var nodes = svg.selectAll('g')
                     .data(data.nodes)
@@ -95,24 +118,26 @@ function TopicGraph($http, $stateParams, TopicNotifier) {
                     .attr('stroke-width', '4px');
 
 
-                circle.on('mouseover', handleMouseOver);
-                circle.on('mouseout', handleMouseOut);
-                circle.on('click', handleClick);
+                circle.on('mouseover', bubbleMouseOverHandler);
+                circle.on('mouseout', bubbleMouseOutHandler);
+                circle.on('click', bubbleClickHandler);
 
-                function handleMouseOver(d, i) {
+                function bubbleMouseOverHandler(d, i) {
                     // Use D3 to select element, change color and size
+                    bubbleTip.show(d);
                     d3.select(this).attr({
                       r:  radius(d.frequency) * 1.2
                     });
                 }
 
-                function handleMouseOut(d, i) {
+                function bubbleMouseOutHandler(d, i) {
+                    bubbleTip.hide(d);
                     d3.select(this).attr({
                         r: radius(d.frequency)
                     });
                 }
 
-                function handleClick(d, i) {
+                function bubbleClickHandler(d, i) {
                     d3.selectAll('.selected').classed('selected', false);
                     d3.select(this).classed('selected', true);
                     TopicNotifier.notify(d);
@@ -386,6 +411,19 @@ function TopicNotifier() {
     this.subscribe = function(cb) {
         callbacks.push(cb);
     };
+}
+
+TooltipFactory.$inject = ['$templateCache', '$interpolate'];
+function TooltipFactory($templateCache, $interpolate) {
+    var factory = {};
+
+    factory.getToolTip = function(templateId) {
+        return d3.tip().attr('class', 'd3-tip')
+            .html(function(d) {
+                return $interpolate($templateCache.get(templateId))(d);
+            });
+    };
+    return factory;
 }
 
 })(angular, d3)

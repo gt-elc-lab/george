@@ -4,6 +4,10 @@
         stroke: #2196f3;
     }
 
+    .node:hover {
+        stroke: #4caf50;
+    }
+
     .selected {
         fill: #4caf50;
         stroke: #4caf50;
@@ -16,6 +20,30 @@
     }
 
 </style>
+<!-- Bubble Tooltip Template -->
+<script type="text/ng-template" id="bubble-tooltip.html">
+  <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">{{id}}</h3>
+      </div>
+      <div class="panel-body">
+        mentioned {{frequency}} times
+      </div>
+</div>
+</script>
+
+<!-- Edge Tooltip Template -->
+<script type="text/ng-template" id="edge-tooltip.html">
+  <div class="panel panel-warning">
+      <div class="panel-heading">
+        <h3 class="panel-title">{{source.id}} and {{target.id}}</h3>
+      </div>
+      <div class="panel-body">
+        mentioned together {{weight}} times
+      </div>
+</div>
+</script>
+
 <div class="panel panel-default">
   <div id="topic-graph" class="panel-body"></div>
 </div>
