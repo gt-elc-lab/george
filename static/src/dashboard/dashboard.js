@@ -39,6 +39,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
                     .links(data.links)
                     .linkDistance(80)
                     .charge(-80)
+                    .gravity(0.04)
                     .size([w, h])
                     .start();
 
@@ -183,8 +184,8 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     };
 };
 
-KeywordFrequencyGraph.$inject = ['$http', '$stateParams', 'TopicNotifier'];
-function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
+KeywordFrequencyGraph.$inject = ['$http', '$stateParams', 'TopicNotifier', 'TooltipFactory'];
+function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
@@ -193,16 +194,17 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
 
         },
         link: function($scope, $element, $attrs) {
+            $scope.vm = {};
             var MARGIN = {
                 top: 20,
                 right: 40,
                 bottom: 20,
                 left: 20
             };
-            var container = $element.children();
 
+            var container = $element.parent();
             var WIDTH = container.width() - MARGIN.left - MARGIN.right;
-            var HEIGHT = 375 - MARGIN.bottom;
+            var HEIGHT = 300 - MARGIN.bottom - MARGIN.top;
             var svg = d3.select('#keyword-frequency-graph').append('svg')
                 .attr('width', WIDTH)
                 .attr('height', HEIGHT)
@@ -214,6 +216,9 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
                 function render(data) {
                     var today = new Date();
                     var weekAgo = moment().subtract(7, 'days').toDate();
+                    $scope.vm.start = today;
+                    $scope.vm.end = weekAgo;
+                    $scope.vm.data = payload;
                     var map = d3.set(data.map(function(i) {return i.date.toDateString()}));
                     var range = d3.time.day.range(weekAgo, today).map(function(i) { return {total: 0,  date: i, id: payload.id};});
                     var fillerDates = range.filter(function(i) { return !map.has(i.date.toDateString())});
@@ -228,16 +233,17 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
                         .domain(d3.extent(data, function(d){return d.total;}))
                         .range([HEIGHT - MARGIN.top, MARGIN.bottom]);
 
+                    var circleTip =  TooltipFactory.getToolTip('circle-tooltip.html');
+                    svg.call(circleTip);
 
                     var line = d3.svg.line()
-                        .interpolate("monotone")
                         .x(function(d) {return xScale(d.date);})
                         .y(function(d) {return yScale(d.total);});
 
                     // Create x and y axis
                     var xAxis = d3.svg.axis().scale(xScale).orient('bottom')
                         .ticks(7)
-                        .tickFormat(d3.time.format('%m/%e'));
+                        .tickFormat(d3.time.format('%a %e'));
 
                     var yAxis = d3.svg.axis().scale(yScale).orient('left')
                         .tickFormat(d3.format('d'));
@@ -256,9 +262,15 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
                             .call(xAxis);
 
                         svg.append('g')
-                            .attr('class', 'y axis')
+                            .attr('class', 'y axis grid')
                             .attr('transform', 'translate(' + MARGIN.left + ',' + 0 + ')')
-                            .call(yAxis);
+                            .call(yAxis)
+                            .append("text")      // text label for the x axis
+                            .attr("x", 15 )
+                            .attr("y", 35 )
+                            .style("text-anchor", "start")
+                            .attr("transform", "rotate(90)")
+                            .text("# submissions");
                     } else {
                         svg.selectAll(".y.axis")
                             .transition().duration(1500).call(yAxis);
@@ -292,6 +304,23 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
                               return yScale(d.total);
                             })
                             .attr("r", 5);
+
+                    points.on('mouseover', circleMouseOverHandler);
+                    points.on('mouseout', circleMouseOutHandler);
+
+                    function circleMouseOverHandler(d) {
+                        circleTip.show(d);
+                        d3.select(this).attr({
+                            r: 8
+                        });
+                    }
+
+                    function circleMouseOutHandler(d) {
+                        circleTip.hide(d);
+                        d3.select(this).attr({
+                            r: 5
+                        });
+                    }
                 }
 
                 var options = {
@@ -301,15 +330,20 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier) {
                     cache: true
                 };
 
+                function transition(data) {
+
+                }
+
                 $http.get('/keyword/activity/' + payload.id, options).then(
                     function(response) {
-                        render(response.data.map(function(i) {
+                        function transform(i) {
                             return {
                                 total: i.total,
                                 date: new Date(i._id),
                                 id: payload.id
                             };
-                    }));
+                        }
+                        render(response.data.map(transform));
                 });
             });
         }
@@ -335,7 +369,7 @@ function SentimentTable($http, $stateParams, TopicNotifier) {
             var container = $element.children();
 
             var WIDTH = container.width() - MARGIN.left - MARGIN.right;
-            var HEIGHT = 125 - MARGIN.bottom;
+            var HEIGHT = 75 - MARGIN.bottom;
             var svg = d3.select('#sentiment-table').append('svg')
                 .attr('width', WIDTH)
                 .attr('height', HEIGHT)

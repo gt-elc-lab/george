@@ -134,7 +134,7 @@ class RedditWorker(threading.Thread):
                 # hours. However AlchemyAPI only gives us 1000 requests per day
                 # and we would most likely exceed the limit if we crawled any
                 # further back.
-                end_date = start_date - timedelta(hours=12)
+                end_date = start_date - timedelta(hours=24)
             self.crawl(college_info, start_date, end_date)
             logger.info('Finished {} from {} to {}'.format(
                 college_info['name'], start_date, end_date))
@@ -266,10 +266,10 @@ class MongoDBService(object):
 
         Returns: A datetime object
         """
-        college = college_info['name']
-        latest_submission = models.Submission.objects(college=college).order_by('-created').first()
-        if latest_submission:
-            return latest_submission.created
+        # college = college_info['name']
+        # latest_submission = models.Submission.objects(college=college).order_by('-created').first()
+        # if latest_submission:
+        #     return latest_submission.created
         return None
 
     @staticmethod
