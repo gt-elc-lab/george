@@ -184,6 +184,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     };
 };
 
+
 KeywordFrequencyGraph.$inject = ['$http', '$stateParams', 'TopicNotifier', 'TooltipFactory'];
 function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
@@ -283,8 +284,7 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
                     //enter and append this lines
                     var path = svg.append("path").datum(data).attr("class", "line");
 
-                    path.transition().duration(1500)
-                        .attr('fill', 'none')
+                    path.attr('fill', 'none')
                         .style('stroke', 'red')
                         .style('stroke-width', '3px')
                         .attr("d", line);
@@ -350,8 +350,8 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
     }
 }
 
-SentimentTable.$inject = ['$http', '$stateParams', 'TopicNotifier'];
-function SentimentTable($http, $stateParams, TopicNotifier) {
+SentimentTable.$inject = ['$http', '$stateParams', 'TopicNotifier', 'TooltipFactory'];
+function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
@@ -360,13 +360,14 @@ function SentimentTable($http, $stateParams, TopicNotifier) {
 
         },
         link: function($scope, $element, $attrs) {
+            $scope.vm = {};
             var MARGIN = {
                 top: 20,
                 right: 40,
                 bottom: 20,
                 left: 20
             };
-            var container = $element.children();
+            var container = $element.parent();
 
             var WIDTH = container.width() - MARGIN.left - MARGIN.right;
             var HEIGHT = 75 - MARGIN.bottom;
@@ -386,16 +387,46 @@ function SentimentTable($http, $stateParams, TopicNotifier) {
                 };
 
                 function render(data) {
+                    $scope.vm.data = payload;
+                    var props = {
+                        pos: {
+                            order: 1,
+                            color: '#4caf50',
+                            display: 'positive',
+                            class: 'success'
+                        },
+                        neu: {
+                            order: 2,
+                            color: '#ff9800',
+                            display: 'neutral',
+                            class: 'warning'
+                        },
+                        neg: {
+                            order: 3,
+                            color: '#e51c23',
+                            display: 'negative',
+                            class: 'danger'
+                        },
+
+                    }
                     data = d3.entries(data).filter(function(i) {
-                            return i.value;
-                    });
+                                return i.value;
+                            })
+                            .map(function(i) {
+                                i.props = props[i.key];
+                                return i;
+                            });
+
                     var order = {pos: 1, neu: 2, neg: 3};
-                    data.sort(function(a, b) { return order[a.key] - order[b.key]});
+                    data.sort(function(a, b) { return a.props.order - b.props.order});
+
                     var scale = d3.scale.linear()
                         .domain([0,1])
                         .range([0, WIDTH]);
 
-                    var colors = {pos: 'green', neu: 'yellow', neg: 'red'};
+                    var colors = {pos: '#4caf50', neu: '#FFDC00', neg: '#e51c23'};
+                    var tooltip = TooltipFactory.getToolTip('sentiment-table-tooltip.html');
+                    svg.call(tooltip);
                     //Draw the Rectangle
                     var rectangle = svg.selectAll('.rect')
                         .data(data)
@@ -403,7 +434,7 @@ function SentimentTable($http, $stateParams, TopicNotifier) {
                         .append('rect')
                         .attr("x", function(i) {
                             var widths =  data.filter(function(d) {
-                                return order[d.key] < order[i.key];
+                                return d.props.order < i.props.order;
                             })
                             .map(function(x) {
                                 return scale(x.value);
@@ -416,11 +447,22 @@ function SentimentTable($http, $stateParams, TopicNotifier) {
                         })
                         .attr("height", HEIGHT)
                         .style('fill', function(i) {
-                            return colors[i.key];
+                            return i.props.color;
                         })
                         .text(function(i) {
                             return i.key;
                         });
+
+                    rectangle.on('mouseover', mouseover);
+                    rectangle.on('mouseout', mouseout);
+
+                    function mouseover(d) {
+                        tooltip.show(d);
+                    }
+
+                    function mouseout(d) {
+                        tooltip.hide(d);
+                    }
                 }
 
                 $http.get('/sentiment/' + payload.id, options).then(

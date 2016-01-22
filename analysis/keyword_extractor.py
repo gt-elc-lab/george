@@ -33,7 +33,7 @@ class AlchemyApiKeywordExtractor(object):
         keywords = []
         for document in documents:
             response = alchemy_api.keywords('text', text_accessor(document), {'sentiment': 1})
-            if response['status'] == 'OK' and response['keywords']:
+            if response['status'] == 'OK':
                 keywords.append(set(map(lambda x: x['text'], response['keywords'])))
             else:
                 keywords.append(set())

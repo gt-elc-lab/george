@@ -8,18 +8,17 @@
 <script type="text/ng-template" id="circle-tooltip.html">
   <div class="panel panel-danger">
       <div class="panel-heading">
-        <h3 class="panel-title"> {{total}} submissions mentioned {{id}}</h3>
+        <h3 class="panel-title"> {{total}} submissions mentioned <span class="text-primary">{{id}}</span></h3>
       </div>
   </div>
 </script>
 
 <div class="panel panel-default">
-  <div id="keyword-frequency-graph" class="panel-body">
-    <div class="well well-sm" ng-if="vm.data">
+    <div class="panel-heading" ng-if="vm.data">
         <h5>
-            <span class="text-primary"> {{vm.data.id}}</span>
+            Submissions mentioning <span class="text-primary">{{vm.data.id}}</span>
         </h5>
-        <small>{{vm.end.toLocaleDateString()}} to {{vm.start.toLocaleDateString()}}.</small>
     </div>
+  <div id="keyword-frequency-graph" class="panel-body">
   </div>
 </div>
