@@ -13,7 +13,7 @@ class AlchemyApiService(object):
         # TODO(simplyfaisal): Refine error handling logic.
         try:
             response = self.alchemy_api.keywords('text', text)
-            if response['status'] == 'OK' and response['keywords']:
+            if response['status'] == 'OK':
                 return list(set(x['text'] for x in response['keywords']))
             else:
                 print ('Error in keyword extraction')

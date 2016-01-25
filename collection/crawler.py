@@ -125,7 +125,7 @@ class RedditWorker(threading.Thread):
             if end_date:
             	# Pad by a few hours to make sure we pick up any new comments
             	# for relatively new posts.
-                end_date -= timedelta(hours=6)
+                end_date -= timedelta(hours=12)
             else:
                 # The college is not in the database so just get the last weeks
                 # worth of data.
