@@ -1,0 +1,34 @@
+<div class="col-md-12">
+    <div class="col-md-3">
+        <div class="input-group">
+            <span class="input-group-addon glyphicon glyphicon-search" id="basic-addon1"></span>
+            <input type="text" class="form-control" placeholder="search reddit submissions" aria-describedby="basic-addon1">
+        </div>
+        <div class="btn-group btn-group-justified top-buffer">
+            <a  class="btn btn-default">Score</a>
+            <a  class="btn btn-default">Frequency</a>
+            <a  class="btn btn-default">Sentiment</a>
+        </div>
+        <div class="dropdown top-buffer">
+            <button class="btn btn-default dropdown-toggle btn-block" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+            Colleges
+            <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <li ng-repeat="college in ws.vm.colleges"
+                    class="btn-block"
+                    ng-click="ws.select(college)">
+                    <span><input type="checkbox">{{college}}</span>
+                </li>
+            </ul>
+        </div>
+        <ul class="list-group top-buffer">
+            <li ng-repeat="college in ws.vm.selected"
+                class="list-group-item">
+                {{college}}
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-9">
+    </div>
+</div>

@@ -26,5 +26,11 @@ george.config(function($stateProvider, $urlRouterProvider) {
     .state('main.dashboard', {
         url: '/dashboard',
         templateUrl: 'src/dashboard/dashboard-template.html'
+    })
+    .state('main.wordsearch', {
+        url: '/wordsearch',
+        templateUrl: 'src/wordsearch/wordsearch-template.html',
+        controller: 'WordsearchController',
+        controllerAs: 'ws'
     });
 });

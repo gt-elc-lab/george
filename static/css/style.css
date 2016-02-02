@@ -12,6 +12,15 @@
     margin-bottom: 10px;
 }
 
+.dropdown-menu > li > span {
+    padding: 3px 20px;
+}
+
+.dropdown-menu  {
+    max-height: 200px;
+    overflow-y: scroll;
+}
+
 .no-gutter > [class*='col-'] {
     padding-right:0;
     padding-left:0;
@@ -25,7 +34,7 @@
 .buffer {
     margin: 0px 15px 0px 15px;
 }
-
+`
 .navbar-nav > li > .dropdown-menu {
     width: 250px;
     padding: 3px;
@@ -35,6 +44,9 @@
     margin: 5px;
 }
 
+.top-buffer {
+    margin-top: 10px;
+}
 .axis path,
 .axis line {
     font-family: Lato;

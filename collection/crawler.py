@@ -227,16 +227,16 @@ class MongoDBService(object):
             post_model = self.serialize_post(post, college_info)
             comment_models = [self.serialize_comment(comment, college_info) for comment in get_comments(post)]
             for comment in comment_models:
-                self.save_and_update_keywords(comment)
+                self.analyse_submission(comment)
             post_model.comments = comment_models
-            self.save_and_update_keywords(post_model)
+            self.analyse_submission(post_model)
             post_count += 1
             comment_count += len(comment_models)
         logger.info('Saved: {} {} posts {} comments'.format(
             college_info['name'], post_count, comment_count))
         return
 
-    def save_and_update_keywords(self, model):
+    def analyse_submission(self, model):
         """
         Gets keywords for model if needed, then persists the model.
 
