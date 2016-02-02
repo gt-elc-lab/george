@@ -28,7 +28,10 @@ george.config(function($stateProvider, $urlRouterProvider) {
         templateUrl: 'src/dashboard/dashboard-template.html'
     })
     .state('main.wordsearch', {
-        url: '/wordsearch',
+        url: '/wordsearch/:vizType?',
+        params: {
+            vizType: 'frequency'
+        },
         templateUrl: 'src/wordsearch/wordsearch-template.html',
         controller: 'WordsearchController',
         controllerAs: 'ws'
