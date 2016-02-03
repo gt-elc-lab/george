@@ -182,7 +182,7 @@ class KeywordActivityHandler(MethodView):
         week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         week_ago.replace(hour=0, minute=0, second=0)
         match = {'$match': {'college': college,
-                            'keywords': keyword,
+                            'keywords.text': keyword,
                             'created': {'$gt': week_ago}
                             }
                 }
@@ -206,24 +206,35 @@ class TopicGraphHandler(MethodView):
         graph = GraphGenerator.build_topic_graph(submissions)
         return json.dumps(graph)
 
-class SentimentTableHandler(MethodView):
+class KeywordSentimentHandler(MethodView):
 
     def get(self, keyword):
         college = flask.request.args.get('college')
         week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
         week_ago.replace(hour=0, minute=0, second=0)
         match = {'$match': {'college': college,
-                            'keywords': keyword,
+                            'keywords.text': keyword,
                             'created': {'$gt': week_ago}}}
+        project = {'$project': {'keywords': 1, '_id': 0}}
+        unwind = {'$unwind': '$keywords'}
+        match_keyword = {'$match': {'keywords.text': keyword}}
         group = {'$group': {
-            '_id': None,
-            'pos': {'$avg': '$pos'},
-            'neg': {'$avg': '$neg'},
-            'neu': {'$avg': '$neu'}
+            '_id': '$keywords.sentiment.type',
+            'total': {'$sum': 1}
         }}
-        pipeline = [match, group]
+        # project_sentiment = {'$project': {'keywords.sentiment': 1}}
+        # group = {'$group': {
+        #     '_id': None,
+        #     'pos': {'$avg': '$pos'},
+        #     'neg': {'$avg': '$neg'},
+        #     'neu': {'$avg': '$neu'}
+        # }}
+        pipeline = [match, project, unwind, match_keyword, group]
         result = models.Submission.objects.aggregate(*pipeline)
-        return flask.json.dumps(list(result)[0])
+        data = list(result)
+        total = sum([x['total'] for x in data])
+        response = { k['_id'] : k['total'] / float(total) for k in data}
+        return flask.json.dumps(response)
 
 
 def json_to_date(date_string):

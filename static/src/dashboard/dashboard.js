@@ -389,19 +389,19 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
                 function render(data) {
                     $scope.vm.data = payload;
                     var props = {
-                        pos: {
+                        positive: {
                             order: 1,
                             color: '#4caf50',
                             display: 'positive',
                             class: 'success'
                         },
-                        neu: {
+                        neutral: {
                             order: 2,
                             color: '#ff9800',
                             display: 'neutral',
                             class: 'warning'
                         },
-                        neg: {
+                        negative: {
                             order: 3,
                             color: '#e51c23',
                             display: 'negative',
@@ -417,14 +417,14 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
                                 return i;
                             });
 
-                    var order = {pos: 1, neu: 2, neg: 3};
+                    var order = {positive: 1, neutral: 2, negative: 3};
                     data.sort(function(a, b) { return a.props.order - b.props.order});
 
                     var scale = d3.scale.linear()
                         .domain([0,1])
                         .range([0, WIDTH]);
 
-                    var colors = {pos: '#4caf50', neu: '#FFDC00', neg: '#e51c23'};
+                    var colors = {positive: '#4caf50', neutral: '#FFDC00', negative: '#e51c23'};
                     var tooltip = TooltipFactory.getToolTip('sentiment-table-tooltip.html');
                     svg.call(tooltip);
                     //Draw the Rectangle

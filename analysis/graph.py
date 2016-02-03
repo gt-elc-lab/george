@@ -21,15 +21,16 @@ class GraphGenerator(object):
         edge_weights = collections.Counter()
 
         keyword_frequencies = collections.Counter(
-            [keyword for document in documents for keyword in document.keywords])
+            [keyword['text'] for document in documents for keyword in document.keywords])
         for document in documents:
             for keyword in document.keywords:
-                G.add_node(keyword, frequency=keyword_frequencies[keyword])
+                G.add_node(keyword['text'], frequency=keyword_frequencies[keyword['text']])
             # Its alright to just add the keywords without checking if it is
             # already in the graph. NetworkX doesn't modify the graph if that
             # is the case.
-            G.add_nodes_from(document.keywords)
-            edges = itertools.combinations(document.keywords, 2)
+            document_keywords = map(lambda x: x['text'], document.keywords)
+            G.add_nodes_from(document_keywords)
+            edges = itertools.combinations(document_keywords, 2)
             for edge in edges:
                 # unlike sets frozensets are hashable
                 _set = frozenset(edge)

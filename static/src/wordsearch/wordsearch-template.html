@@ -2,18 +2,23 @@
     <div class="col-md-3">
         <div class="input-group">
             <span class="input-group-addon glyphicon glyphicon-search" id="basic-addon1"></span>
-            <input type="text" class="form-control" placeholder="search reddit submissions" aria-describedby="basic-addon1">
+            <input  type="text"
+                    class="form-control"
+                    placeholder="search reddit submissions"
+                    aria-describedby="basic-addon1"
+                    ng-model="ws.searchTerm">
         </div>
         <div class="btn-group btn-group-justified top-buffer">
-            <a  ui-sref-active="btn-primary"
-                ui-sref="main.wordsearch({vizType: 'score'})"
-                class="btn btn-default">Score</a>
-            <a  ui-sref-active="btn-primary"
+            <a  id="wordsearch-score"
                 class="btn btn-default"
-                ui-sref="main.wordsearch({vizType: 'frequency'})">Frequency</a>
-            <a  ui-sref-active="btn-primary"
+                ng-click="ws.selectVizType('score')">Score</a>
+            <a  id="wordsearch-frequency"
                 class="btn btn-default"
-                ui-sref="main.wordsearch({vizType: 'sentiment'})">Sentiment</a>
+                ng-click="ws.selectVizType('frequency')">Frequency</a>
+            <a  id="wordsearch-sentiment"
+                class="btn btn-default"
+                ng-click="ws.selectVizType('sentiment')"
+                >Sentiment</a>
         </div>
         <div class="dropdown top-buffer">
             <button class="btn btn-default dropdown-toggle btn-block" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">

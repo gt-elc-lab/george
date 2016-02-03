@@ -10,12 +10,15 @@ function WordsearchController($http, $state) {
         SCORE: 'score',
         SENTIMENT: 'sentiment'
     };
-    var colors = d3.scale.category20();
-    $state.params.vizType = $state.params.vizType ? $state.params.vizType
-        : vizTypes.FREQUENCY;
     this.vm = {}
-    var selected = {};
+    this.viz = null;
     this.select = select;
+    this.selectVizType = selectVizType;
+    init.bind(this)();
+
+    var colors = d3.scale.category20();
+    var selected = {};
+
     $http.get('/colleges', {cache: true}).then(collegesSuccess.bind(this));
 
     function collegesSuccess(response) {
@@ -27,15 +30,25 @@ function WordsearchController($http, $state) {
         });
     }
 
+    function init() {
+        this.selectVizType(vizTypes.SCORE);
+    }
+
     function select(college) {
         if (college.name in selected) {
-            delete selected[college];
+            delete selected[college.name];
         } else {
             selected[college.name] = college
         }
         this.vm.selected = Object.keys(selected).map(function(college) {
             return selected[college];
         });
+    }
+
+    function selectVizType(viz) {
+        this.viz = viz;
+        $('.btn').removeClass('btn-primary');
+        $('#wordsearch-' + viz).addClass('btn-primary');
     }
 }
 

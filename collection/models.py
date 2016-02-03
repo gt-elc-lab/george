@@ -1,7 +1,7 @@
 from mongoengine import *
 import config
 
-connect(config.TEST_DB_NAME, host=config.TEST_DB_URI)
+connect('reddit')
 
 class Submission(Document):
     r_id = StringField(primary_key=True)
@@ -17,7 +17,7 @@ class Submission(Document):
     pos = FloatField()
     neg = FloatField()
     neu = FloatField()
-    keywords = ListField(StringField())
+    keywords = ListField(DynamicField())
 
     meta = {
             'allow_inheritance': True,

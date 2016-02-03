@@ -12,9 +12,9 @@ class AlchemyApiService(object):
     def get_keywords(self, text):
         # TODO(simplyfaisal): Refine error handling logic.
         try:
-            response = self.alchemy_api.keywords('text', text)
+            response = self.alchemy_api.keywords('text', text, {'sentiment': 1})
             if response['status'] == 'OK':
-                return list(set(x['text'] for x in response['keywords']))
+                return response['keywords']
             else:
                 print ('Error in keyword extraction')
                 print response
