@@ -6,7 +6,7 @@ class CrawlTask(task.Task):
     """ Task for scraping reddit """
     @staticmethod
     def execute():
-        crawler.MultiThreadedCrawler([{'name': 'Georgia Tech', 'subreddit': 'gatech'},]).start()
+        crawler.MultiThreadedCrawler(config.SUBREDDITS).start()
         return
 
 if __name__ == '__main__':
