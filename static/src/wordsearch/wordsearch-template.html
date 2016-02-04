@@ -1,3 +1,10 @@
+<script type="text/ng-template" id="search-tooltip.html">
+  <div class="panel" style="background-color: {{color}}">
+      <div class="panel-heading">
+        <h3 class="panel-title"> {{total | number:0}}</h3>
+      </div>
+  </div>
+</script>
 <div class="col-md-12">
     <div class="col-md-3">
         <div class="input-group">
@@ -46,6 +53,7 @@
             </li>
         </ul>
     </div>
-    <div class="col-md-9">
+    <div    id="search-viz"
+            class="col-md-9 box">
     </div>
 </div>

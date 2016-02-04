@@ -59,7 +59,7 @@ class SearchFrequencyHandler(MethodView):
         term = flask.request.args.get('term')
         date_filter = flask.request.args.get('date_filter')
         if not date_filter:
-            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(days=14)
         else:
             date_filter = json_to_date(date_filter)
         match = {'$match':
@@ -81,7 +81,7 @@ class SearchScoreHandler(MethodView):
         term = flask.request.args.get('term')
         date_filter = flask.request.args.get('date_filter')
         if not date_filter:
-            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(days=14)
         else:
             date_filter = json_to_date(date_filter)
         match = {'$match':

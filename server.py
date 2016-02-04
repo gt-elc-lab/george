@@ -31,7 +31,7 @@ application.add_url_rule('/wordsearch/<string:college>',
     view_func=route_handlers.SearchFrequencyHandler.as_view('wordsearch'), methods=['GET'])
 
 application.add_url_rule('/scoresearch/<string:college>',
-    view_func=route_handlers.SearchFrequencyHandler.as_view('scoresearch'), methods=['GET'])
+    view_func=route_handlers.SearchScoreHandler.as_view('scoresearch'), methods=['GET'])
 
 application.add_url_rule('/sentimentsearch/<string:college>',
     view_func=route_handlers.SearchSentimentHandler.as_view('sentimentsearch'), methods=['GET'])
