@@ -53,39 +53,71 @@ class KeywordSubmissionHandler(MethodView):
         #data = [models.Post.from_json(doc).to_json() for doc in query_result]
         return flask.jsonify(data=data)
 
-class WordSearchView(MethodView):
+class SearchFrequencyHandler(MethodView):
 
     def get(self, college):
         term = flask.request.args.get('term')
-        offset = int(flask.request.args.get('offset'))
-        days_ago = int(flask.request.args.get("elapsedTime"))
-        end = datetime.datetime.utcnow() + datetime.timedelta(minutes=offset)
-
-        start = end - datetime.timedelta(days=days_ago)
+        date_filter = flask.request.args.get('date_filter')
+        if not date_filter:
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+        else:
+            date_filter = json_to_date(date_filter)
         match = {'$match':
                      {'college': college,
-                      'created': {'$gte': start, '$lte': end},
+                      'created': {'$gte': date_filter},
                       '$text': {'$search': term}}}
-        project = {'$project': {
-                'y': {'$year': '$created'},
-                'm': {'$month': '$created'},
-                'd': {'$dayOfMonth': '$created'}
-        }}
         group = {'$group': {
-         '_id': {
-             'year': '$y',
-             'month': '$m',
-             'day': '$d',
-         },
-        'total': {'$sum': 1},
+            '_id': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$created' }},
+            'total': {'$sum': 1},
          }}
-        sort = {'$sort':{
-             '_id.year': -1,
-             '_id.month': -1,
-             '_id.day' : -1
-             }}
         mongo_dao = MongoDao()
-        pipeline = [match, project, group, sort]
+        pipeline = [match, group]
+        query_results = mongo_dao.db.submissions.aggregate(pipeline)
+        return json.dumps(list(query_results))
+
+class SearchScoreHandler(MethodView):
+
+    def get(self, college):
+        term = flask.request.args.get('term')
+        date_filter = flask.request.args.get('date_filter')
+        if not date_filter:
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+        else:
+            date_filter = json_to_date(date_filter)
+        match = {'$match':
+                     {'college': college,
+                      'created': {'$gte': date_filter},
+                      '$text': {'$search': term}}}
+        group = {'$group': {
+            '_id': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$created' }},
+            'total': {'$avg': '$score'},
+         }}
+        mongo_dao = MongoDao()
+        pipeline = [match, group]
+        query_results = mongo_dao.db.submissions.aggregate(pipeline)
+        return json.dumps(list(query_results))
+
+class SearchSentimentHandler(MethodView):
+
+    def get(self, college):
+        term = flask.request.args.get('term')
+        date_filter = flask.request.args.get('date_filter')
+        if not date_filter:
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+        else:
+            date_filter = json_to_date(date_filter)
+        match = {'$match':
+                     {'college': college,
+                      'created': {'$gte': date_filter},
+                      '$text': {'$search': term}}}
+        group = {'$group': {
+            '_id': { '$dateToString': { 'format': '%Y-%m-%d', 'date': '$created' }},
+            'positive': {'$avg': '$pos'},
+            'neutral': {'$avg': '$neu'},
+            'neg': {'$avg': '$neg'},
+         }}
+        mongo_dao = MongoDao()
+        pipeline = [match, group]
         query_results = mongo_dao.db.submissions.aggregate(pipeline)
         return json.dumps(list(query_results))
 
@@ -102,58 +134,6 @@ class WordSearchView(MethodView):
                 _id['year'], _id['month'], _id['day'])
         return datetime.datetime.strptime(date, '%d-%m-%Y')
 
-class ActivityHandler(MethodView):
-
-   def get(self):
-        college = flask.request.args.get('college')
-        offset = flask.request.args.get('offset')
-        desired_date = get_today_from_offset(int(offset))
-
-        mongo_dao = MongoDao()
-        query = {
-           'college': college,
-           'created_utc': {'$gte': threshold}
-        }
-        match ={'$match': query}
-        project = {'$project': {
-                'stype': 1,
-                'y': {'$year': '$created_utc'},
-                'm': {'$month': '$created_utc'},
-                'd': {'$dayOfMonth': '$created_utc'},
-                'h': {'$hour': '$created_utc'}
-        }}
-        group = {'$group': {
-         '_id': {
-             'year': '$y',
-             'month': '$m',
-             'day': '$d',
-             'hour': '$h',
-             'stype': '$stype'
-         },
-        'total': {'$sum': 1},
-         }}
-        sort = {'$sort':{
-             '_id.year': -1,
-             '_id.month': -1,
-             '_id.day' : -1,
-             '_id.hour': -1
-             }}
-        pipeline = [match, project, group, sort]
-        data = mongo_dao.post_collection.aggregate(pipeline)
-        buckets = collections.defaultdict(list)
-        for item in data:
-            date = datetime.datetime(year=item['_id']['year'],
-                                     month=item['_id']['month'], day=item['_id']['day'], hour=item['_id']['hour'])
-            date += datetime.timedelta(minutes=int(offset))
-            buckets[date].append(item)
-        formatted_data = []
-        for k, v in buckets.iteritems():
-            data_point = {'date': str(k), 'comment': 0, 'post': 0}
-            for submission in v:
-                stype = submission['_id']['stype'].lower()
-                data_point[stype] += submission['total']
-            formatted_data.append(data_point)
-        return flask.jsonify(data=formatted_data)
 
 class KeyWordTreeHandler(MethodView):
 

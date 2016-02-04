@@ -28,10 +28,13 @@ application.add_url_rule('/submissions/keyword/<keyword>/<int:page>',
     view_func=route_handlers.KeywordSubmissionHandler.as_view('submissionkeywords'))
 
 application.add_url_rule('/wordsearch/<string:college>',
-    view_func=route_handlers.WordSearchView.as_view('wordsearch'), methods=['GET'])
+    view_func=route_handlers.SearchFrequencyHandler.as_view('wordsearch'), methods=['GET'])
 
-application.add_url_rule('/activity',
-    view_func=route_handlers.ActivityHandler.as_view('activity'))
+application.add_url_rule('/scoresearch/<string:college>',
+    view_func=route_handlers.SearchFrequencyHandler.as_view('scoresearch'), methods=['GET'])
+
+application.add_url_rule('/sentimentsearch/<string:college>',
+    view_func=route_handlers.SearchSentimentHandler.as_view('sentimentsearch'), methods=['GET'])
 
 application.add_url_rule('/cokeywords',
     view_func=route_handlers.KeyWordTreeHandler.as_view('cokeywords'))
