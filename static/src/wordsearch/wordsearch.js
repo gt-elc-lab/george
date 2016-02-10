@@ -2,7 +2,6 @@
 var george = angular.module('george');
 
 george.controller('WordsearchController', WordsearchController);
-george.service('SearchNotifier', SearchNotifier)
 
 WordsearchController.$inject = ['$http', '$state', '$q', 'TooltipFactory'];
 function WordsearchController($http, $state, $q, TooltipFactory) {
@@ -20,6 +19,7 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
 
     var colors = d3.scale.category20();
     var selected = {};
+    var pubsub = new PubSub()
 
     $http.get('/colleges', {cache: true}).then(collegesSuccess.bind(this));
 
@@ -261,11 +261,30 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
                             .data(sentiments)
                             .enter().append("g")
                             .attr("class", "browser");
+            var line = svg.append("line")
+                        .attr("x1", 5)
+                        .attr("y1", 0)
+                        .attr("x2", 5)
+                        .attr("y2", height)
+                        .attr("stroke-width", 2)
+                        .attr("stroke", "black");
 
+            pubsub.subscribe(function() {
+                    var x = d3.mouse(this)[0];
+                    line.attr('x1', x)
+                        .attr('y1', 0)
+                        .attr('x2', x)
+                        .attr('y2', height)
+                        .style('display', 'visible')
+              });
+              svg.on('mousemove', function() {
+                pubsub.publish(this);
+              });
             sentiment.append("path")
               .attr("class", "area")
               .attr("d", function(d) { return area(d.values); })
               .style("fill", function(d) { return color(d.name); });
+
 
             sentiment.append("text")
               .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
@@ -286,13 +305,13 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
     }
 }
 
-function SearchNotifier() {
+function PubSub() {
 
     var callbacks = [];
 
-    this.notify = function(data) {
+    this.publish = function(ctx) {
         callbacks.forEach(function(cb) {
-            cb(data);
+            cb.call(ctx || this);
         });
     };
 
