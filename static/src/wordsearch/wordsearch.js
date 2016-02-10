@@ -91,6 +91,21 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
         });
     }
 
+    function fillDates(data, defaultFn) {
+        var flattened = d3.merge(data.map(function(d) { return d.data}));
+        var dateExtent = d3.extent(flattened, function(d) {return d.date;});
+        var dateMin = dateExtent[0];
+        var dateMax = dateExtent[1];
+        var range = d3.time.day.range(dateMin, dateMax).map(defaultFn);
+        return data.map(function(d) {
+            var map = d3.set(d.data.map((function(i) {return i.date.toDateString();})))
+            var fillerDates = range.filter(function(i) { return !map.has(i.date.toDateString())});
+            d.data = d.data.concat(fillerDates);
+            d.data.sort(function(a, b) { return a.date - b.date;});
+            return d;
+        });
+    }
+
     function simpleSearchVisualization(data) {
         var parent = $('#search-viz');
         var WIDTH = parent.width();
@@ -101,21 +116,9 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
                 .attr('height', HEIGHT)
                 .append('g')
                 .attr('transform', 'translate(' + MARGIN.left + ',' + 0+ ')');
-
         var flattened = d3.merge(data.map(function(d) { return d.data}));
+        data = fillDates(data, function(i) {return {total: 0,  date: i}})
         var dateExtent = d3.extent(flattened, function(d) {return d.date;});
-        var dateMin = dateExtent[0];
-        var dateMax = dateExtent[1];
-        var range = d3.time.day.range(dateMin, dateMax).map(function(i) { return {total: 0,  date: i};});
-        data =  data.map(function(d) {
-            var map = d3.set(d.data.map((function(i) {return i.date.toDateString();})))
-            var fillerDates = range.filter(function(i) { return !map.has(i.date.toDateString())});
-            d.data = d.data.concat(fillerDates);
-            d.data.sort(function(a, b) { return a.date - b.date;});
-            return d;
-        });
-
-
         var x = d3.time.scale()
                     .domain(dateExtent)
                     .range([MARGIN.left, WIDTH - MARGIN.right - MARGIN.left]);
@@ -126,7 +129,7 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
 
         var line = d3.svg.line()
                         .x(function(d) {return x(d.date);})
-                        .y(function(d) {return y(d.total);});
+                        .y(function(d) {return y(d.total);})
 
         var xAxis = d3.svg.axis().scale(x).orient('bottom')
                         .tickFormat(d3.time.format('%a %e'));
@@ -195,7 +198,91 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
     }
 
     function sentimentVisualization(data) {
+        var parent = $('#search-viz');
+        var margin = {top: 20, right: 20, bottom: 30, left: 50},
+            width = parent.width() - margin.left - margin.right,
+            height = 200 - margin.top - margin.bottom;
 
+        var x = d3.time.scale()
+                .range([0, width]);
+
+        var y = d3.scale.linear()
+                .range([height, 0]);
+
+        var categories = d3.set(['positive', 'negative', 'neutral']);
+        var color = d3.scale.category20();
+        color.domain(d3.keys(data[0].data[0]).filter(categories.has, categories));
+        var formatPercent = d3.format(".0%");
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient("left")
+                    .tickFormat(formatPercent);
+
+
+        var area = d3.svg.area()
+            .x(function(d) { return x(d.date); })
+            .y0(function(d) { return y(d.y0); })
+            .y1(function(d) { return y(d.y0 + d.y); });
+
+        var stack = d3.layout.stack()
+            .values(function(d) { return d.values; });
+
+
+        var flattened = d3.merge(data.map(function(d) { return d.data}));
+        x.domain(d3.extent(data[0].data, function(d) { return d.date; }));
+
+        data = fillDates(data, function(i) {
+            return {positive: 0, neutral: 0, negative: 0,  date: i}});
+
+        data.forEach(function(college) {
+
+            var svg = d3.select("#search-viz").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            var sentiments = stack(color.domain().map(function(name) {
+                return {
+                  name: name,
+                  values: college.data.map(function(d) {
+                    return {date: d.date, y: d[name]};
+                  })
+                };
+              }));
+
+
+            var sentiment = svg.selectAll(".browser")
+                            .data(sentiments)
+                            .enter().append("g")
+                            .attr("class", "browser");
+
+            sentiment.append("path")
+              .attr("class", "area")
+              .attr("d", function(d) { return area(d.values); })
+              .style("fill", function(d) { return color(d.name); });
+
+            sentiment.append("text")
+              .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+              .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.y0 + d.value.y / 2) + ")"; })
+              .attr("x", -6)
+              .attr("dy", ".35em")
+              .text(function(d) { return d.name; });
+
+            svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);
+
+            svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis);
+        });
     }
 }
 
