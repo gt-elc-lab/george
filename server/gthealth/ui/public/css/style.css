@@ -1,0 +1,52 @@
+
+.margin-top-sm {
+    margin-top: 10px;
+}
+
+.margin-top-md {
+    margin-top: 20px;
+}
+
+.margin-top-lg {
+    margin-top: 30px;
+}
+
+.margin-btm-sm {
+    margin-bottom: 10px;
+}
+
+.margin-btm-md {
+    margin-bottom: 20px;
+}
+
+.margin-btm-lg {
+    margin-bottom: 30px;
+}
+
+.zero-border-radius {
+    border-radius: 0px;
+}
+
+.first-child-padding {
+    margin-top: 70px;
+}
+
+
+/* Bootswatch overrides*/
+.navbar {
+    margin-bottom: 0px;
+}
+
+.jumbotron {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+.panel .alert {
+    border-radius: 0px;
+    margin-bottom: 0px;
+}
+
+.panel-heading {
+    border-radius: 0px;
+}
