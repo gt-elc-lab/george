@@ -1,7 +1,9 @@
+"use strict";
+
 exports.LoginStateController = LoginStateController;
 exports.RegisterStateController = RegisterStateController;
 exports.MainStateController = MainStateController;
-exports.RegisterStateController = RegisterStateController;
+exports.ReplyStateController = ReplyStateController;
 
 
 LoginStateController.$inject = ['$state', 'AuthenticationService'];
@@ -10,7 +12,7 @@ function LoginStateController($state, AuthenticationService) {
     this.login = function() {
         this.error = null;
         AuthenticationService.login(this.email, this.password).then(function(response) {
-            $state.go('main');
+            $state.go('gthealth.main');
         }.bind(this), function(error) {
             this.error = error;
         }.bind(this));
@@ -34,9 +36,10 @@ function RegisterStateController($state, AuthenticationService) {
 MainStateController.$inject = ['$state', '$http', 'Post', 'AuthenticationService', 'CurrentUserService'];
 function MainStateController($state, $http, Post, AuthenticationService, CurrentUserService) {
     this.posts = Post.query();
+    console.log(this.posts);
 }
 
-RegisterStateController.$inject = ['$state', 'Post', '$timeout', 'ResponseListModel', 'CurrentUserService'];
+ReplyStateController.$inject = ['$state', 'Post', '$timeout', 'ResponseListModel', 'CurrentUserService'];
 function ReplyStateController($state, Post, $timeout, ResponseListModel, CurrentUserService) {
     var currentUser = CurrentUserService.getCurrentUser();
     this.post = $state.params.post ? $state.params.post : Post.get({_id: $state.params._id});

@@ -1,3 +1,5 @@
+var d3 = require('d3');
+
 exports.TopicGraph = TopicGraph;
 exports.KeywordFrequencyGraph = KeywordFrequencyGraph;
 exports.SentimentTable = SentimentTable;
@@ -7,7 +9,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
-        templateUrl:'src/dashboard/topic-graph-template.html',
+        templateUrl:'george/templates/topic-graph-template.html',
         controller: function($scope, $stateParams) {
 
         },
@@ -183,7 +185,7 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
     return {
         restrict: 'E',
         scope: {},
-        templateUrl: 'src/dashboard/keyword-frequency-graph.html',
+        templateUrl: 'george/templates/keyword-frequency-graph.html',
         controller: function($scope) {
 
         },
@@ -348,7 +350,7 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
-        templateUrl: 'src/dashboard/sentiment-table.html',
+        templateUrl: 'george/templates/sentiment-table.html',
         controller: function($scope) {
 
         },

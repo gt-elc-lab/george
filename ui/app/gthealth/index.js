@@ -5,6 +5,7 @@ require('angular-resource');
 var controllers = require('./controllers');
 var utils = require('./utils');
 var authentication = require('./authentication');
+var directives = require('./directives');
 
 
 var gthealth = angular.module('gthealth', ['ui.router', 'ngResource'])
@@ -12,6 +13,9 @@ var gthealth = angular.module('gthealth', ['ui.router', 'ngResource'])
     .controller('RegisterStateController', controllers.RegisterStateController)
     .controller('MainStateController', controllers.MainStateController)
     .controller('ReplyStateController', controllers.ReplyStateController)
+
+    .directive('feedPostCard', directives.FeedPostCard)
+    .directive('responseCard', directives.ResponseCard)
 
     .service('CurrentUserService', authentication.CurrentUserService)
     .service('AuthenticationService', authentication.AuthenticationService)

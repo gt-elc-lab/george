@@ -3,7 +3,7 @@ exports. Post = Post;
 
 Post.$inject = ['$resource'];
 function Post($resource) {
-    return $resource('/api/post/:_id', {_id: '@_id'}, {
+    return $resource('/gthealth/post/:_id', {_id: '@_id'}, {
         query: {
             method: 'GET',
             isArray: true

@@ -1,3 +1,5 @@
+"use strict";
+
 exports.CurrentUserService = CurrentUserService;
 exports.AuthenticationService = AuthenticationService;
 

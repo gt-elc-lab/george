@@ -1,3 +1,4 @@
+var d3 = require('d3');
 
 exports.ShellController = ShellController;
 exports.WordsearchController = WordsearchController;
@@ -26,13 +27,13 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
     this.select = select;
     this.selectVizType = selectVizType;
     this.search = search.bind(this);
-    init.bind(this)();
+    init.call(this);
 
     var colors = d3.scale.category20();
     var selected = {};
     var pubsub = new PubSub();
 
-    $http.get('/colleges', {cache: true}).then(collegesSuccess.bind(this));
+    $http.get('/george/colleges', {cache: true}).then(collegesSuccess.bind(this));
 
     function collegesSuccess(response) {
         this.vm.colleges = response.data.colleges.map(function(college, i) {
@@ -72,7 +73,7 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
             score: 'scoresearch/',
             sentiment: 'sentimentsearch/'
         };
-        var url = baseUrl[this.viz];
+        var url = '/george/' + baseUrl[this.viz];
         var visualize = this.viz == vizTypes.FREQUENCY ||
             this.viz == vizTypes.SCORE ? simpleSearchVisualization : sentimentVisualization
         var promises = colleges.map(function(college) {

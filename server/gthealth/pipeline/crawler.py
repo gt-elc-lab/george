@@ -1,7 +1,7 @@
 from datetime import datetime
 import praw
 
-import config
+from gthealth import config
 import classifier
 import model
 
@@ -50,5 +50,4 @@ def download_corpus():
 
 
 if __name__ == '__main__':
-    # Crawler(classifier.SimpleClassifier()).run()
-    download_corpus()
+    Crawler(classifier.SimpleClassifier()).run()

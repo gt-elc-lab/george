@@ -1,4 +1,4 @@
-var george = require('./george')
+var d3 = require('d3');
 
 exports.TopicNotifier = TopicNotifier;
 exports.TooltipFactory = TooltipFactory;

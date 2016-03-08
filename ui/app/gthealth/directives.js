@@ -1,6 +1,5 @@
-var gthealth = require('./gthealth')
-    .directive('feedPostCard', FeedPostCard)
-    .directive('responseCard', ResponseCard);
+exports.ResponseCard = ResponseCard;
+exports.FeedPostCard = FeedPostCard;
 
 ResponseCard.$inject = ['$state'];
 function ResponseCard() {
@@ -10,7 +9,7 @@ function ResponseCard() {
             sendResponse: '&'
         },
         restrict: 'AE',
-        templateUrl: 'partials/responsecard.html',
+        templateUrl: 'gthealth/templates/responsecard.html',
         link: function($scope, $element, $attrs) {
 
         },
@@ -43,7 +42,7 @@ function FeedPostCard() {
             post: '='
         },
         restrict: 'AE',
-        templateUrl: 'partials/feedpostcard.html',
+        templateUrl: 'gthealth/templates/feedpostcard.html',
         link: function($scope, $element, $attrs) {
             $scope.$on('$destroy', function() {
                 $element.remove();
@@ -82,7 +81,7 @@ function FeedPostCard() {
             };
 
             $scope.reply = function() {
-                $state.go('main.reply', {_id: $scope.post._id, post: $scope.post});
+                $state.go('gthealth.main.reply', {_id: $scope.post._id, post: $scope.post});
                 return;
             }
 
