@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 */api_key.txt
+*/.DS_Store
 collection/george-key.p12
 # C extensions
 *.so
