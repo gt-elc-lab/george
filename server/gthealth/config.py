@@ -2,7 +2,7 @@ BOT_CREDENTIALS = {
         'username':'gthealth',
         'password':'password'
     }
-    
+
 MAIL_SETTINGS = {
         'server': 'smtp.gmail.com',
         'port': 587,

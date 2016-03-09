@@ -1,5 +1,7 @@
 import nltk
-import config
+
+from gthealth import config
+from gthealth import model
 
 class Classifier(object):
     """ Interface """
@@ -8,10 +10,7 @@ class Classifier(object):
         raise NotImplementedError()
 
 
-    def classifyAccuracy(submission):
-        raise NotImplementedError()
-    
-class SimpleClassifier(object):
+class SimpleClassifier(Classifier):
 
     def classify(self, submission):
         tokens = nltk.tokenize.word_tokenize(submission.content)
@@ -20,14 +19,12 @@ class SimpleClassifier(object):
                 return True
         return False
 
-    def computeAccuracy(self, arraySamples):
-        countSamples = 0.0;
-        numLabelled = 0.0;
-        for submission in arraySamples:
-            tokens = nltk.tokenize.word_tokenize(submission.content)
-            countSamples += 1
-                if classify(submission)
-                    numLabelled += 1
-        return numLabelled/countSamples        
+def test_classifier(classifier, samples):
+    correct = sum(1.0 for sample in samples
+        if sample.label == classifier.classify(sample))
+    return correct / len(samples)
 
 
+if __name__ == '__main__':
+    samples = model.Sample.objects(label__exists=True)
+    print test_classifier(SimpleClassifier(), samples)

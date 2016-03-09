@@ -5,7 +5,7 @@ import datetime
 
 from gthealth import config
 
-connect('gthealth')
+connect(host=config.TEST_DB_URI)
 
 class Post(Document):
     r_id = StringField(primary_key=True)
