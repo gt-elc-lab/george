@@ -1,4 +1,5 @@
 var d3 = require('d3');
+var d3tooltip = require('d3-tip')(d3);
 
 exports.TopicNotifier = TopicNotifier;
 exports.TooltipFactory = TooltipFactory;
@@ -25,7 +26,7 @@ function TooltipFactory($templateCache, $interpolate) {
     var factory = {};
 
     factory.getToolTip = function(templateId) {
-        return d3.tip().attr('class', 'd3-tip')
+        return d3tooltip().attr('class', 'd3-tip')
             .html(function(d) {
                 return $interpolate($templateCache.get(templateId))(d);
             });

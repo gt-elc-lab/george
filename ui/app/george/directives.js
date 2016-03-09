@@ -1,4 +1,5 @@
 var d3 = require('d3');
+var moment = require('moment');
 
 exports.TopicGraph = TopicGraph;
 exports.KeywordFrequencyGraph = KeywordFrequencyGraph;
@@ -22,7 +23,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
                 .attr('width', w)
                 .attr('height', h);
 
-           $http.get('/topicgraph/' + $stateParams.college).then(function(response) {
+           $http.get('/george/topicgraph/' + $stateParams.college).then(function(response) {
                 render(response.data);
             }, function(error) {
                 alert('error');
@@ -198,8 +199,8 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
                 left: 20
             };
 
-            var container = $element.parent();
-            var WIDTH = container.width() - MARGIN.left - MARGIN.right;
+            var $container = $element.parent();
+            var WIDTH = $container.width()- MARGIN.left - MARGIN.right;
             var HEIGHT = 300 - MARGIN.bottom - MARGIN.top;
             var svg = d3.select('#keyword-frequency-graph').append('svg')
                 .attr('width', WIDTH)
@@ -329,7 +330,7 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
 
                 }
 
-                $http.get('/keyword/activity/' + payload.id, options).then(
+                $http.get('/george/keyword/activity/' + payload.id, options).then(
                     function(response) {
                         function transform(i) {
                             return {
@@ -362,9 +363,9 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
                 bottom: 20,
                 left: 20
             };
-            var container = $element.parent();
+            var $container = $element.parent();
 
-            var WIDTH = container.width() - MARGIN.left - MARGIN.right;
+            var WIDTH = $container.width() - MARGIN.left - MARGIN.right;
             var HEIGHT = 75 - MARGIN.bottom;
             var svg = d3.select('#sentiment-table').append('svg')
                 .attr('width', WIDTH)
@@ -460,7 +461,7 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
                     }
                 }
 
-                $http.get('/sentiment/' + payload.id, options).then(
+                $http.get('/george/sentiment/' + payload.id, options).then(
                     function(response) {
                         render(response.data);
                 });
