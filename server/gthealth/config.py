@@ -2,6 +2,13 @@ BOT_CREDENTIALS = {
         'username':'gthealth',
         'password':'password'
     }
+    
+MAIL_SETTINGS = {
+        'server': 'smtp.gmail.com',
+        'port': 587,
+        'username': 'gtgoodhealth@gmail.com',
+        'password': 'GeorgeP@1927'
+    }
 
 TEST_DB_URI = 'mongodb://elc:yak@ds047652.mongolab.com:47652/redditdump'
 
