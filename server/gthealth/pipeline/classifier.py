@@ -26,11 +26,8 @@ class SimpleClassifier(object):
         for submission in arraySamples:
             tokens = nltk.tokenize.word_tokenize(submission.content)
             countSamples += 1
-            for word in tokens:
-                if word in config.keywords:
-                    if submission.label:
-                        numLabelled += 1
-                    break
+                if classify(submission)
+                    numLabelled += 1
         return numLabelled/countSamples        
 
 
