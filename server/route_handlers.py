@@ -104,7 +104,7 @@ class SearchSentimentHandler(MethodView):
         term = flask.request.args.get('term')
         date_filter = flask.request.args.get('date_filter')
         if not date_filter:
-            date_filter = datetime.datetime.utcnow() - datetime.timedelta(days=14)
+            date_filter = datetime.datetime.utcnow() - datetime.timedelta(weeks=2)
         else:
             date_filter = json_to_date(date_filter)
         match = {'$match':

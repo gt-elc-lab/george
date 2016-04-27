@@ -41,19 +41,19 @@ function RestService($http) {
     var offset = new Date().getTimezoneOffset()
 
     service.getPost = function(postId) {
-        return $http.get('george/post/' + postId);
+        return $http.get('/api/post/' + postId);
     };
 
     service.getComment = function(commentId) {
-        return $http.get('george/comment/' + commentId);
+        return $http.get('/api/comment/' + commentId);
     };
 
     service.getCollegeList = function() {
-        return $http.get('/george/colleges', {cache: true});
+        return $http.get('/api/colleges', {cache: true});
     };
 
     service.getCommentsForPost = function(postId) {
-        return $http.get('george/comments/' + postId, {cache: true});
+        return $http.get('/api/comments/' + postId, {cache: true});
     };
 
     service.getTermFrequencyData = function(term, colleges, opt_start, opt_end) {
@@ -65,7 +65,7 @@ function RestService($http) {
             params.start = Math.floor(opt_start.valueOf() / 1000);
             params.end = Math.floor(opt_end.valueOf() / 1000);
         }
-        return $http.get('george/wordsearch', { params: params });
+        return $http.get('/api/wordsearch', { params: params });
     };
 
     service.getCoKeywords = function(college, keyword) {
@@ -73,7 +73,7 @@ function RestService($http) {
             college: college,
             keyword: keyword
         };
-        return $http.get('george/cokeywords', {params: params});
+        return $http.get('/api/cokeywords', {params: params});
     }
     return service;
 }

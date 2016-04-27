@@ -33,7 +33,7 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
     var selected = {};
     var pubsub = new PubSub();
 
-    $http.get('/george/colleges', {cache: true}).then(collegesSuccess.bind(this));
+    $http.get('/api/colleges', {cache: true}).then(collegesSuccess.bind(this));
 
     function collegesSuccess(response) {
         this.vm.colleges = response.data.colleges.map(function(college, i) {
@@ -73,7 +73,7 @@ function WordsearchController($http, $state, $q, TooltipFactory) {
             score: 'scoresearch/',
             sentiment: 'sentimentsearch/'
         };
-        var url = '/george/' + baseUrl[this.viz];
+        var url = '/api/' + baseUrl[this.viz];
         var visualize = this.viz == vizTypes.FREQUENCY ||
             this.viz == vizTypes.SCORE ? simpleSearchVisualization : sentimentVisualization
         var promises = colleges.map(function(college) {

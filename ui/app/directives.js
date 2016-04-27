@@ -10,7 +10,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
-        templateUrl:'george/templates/topic-graph-template.html',
+        templateUrl:'partials/topic-graph-template.html',
         controller: function($scope, $stateParams) {
 
         },
@@ -23,7 +23,7 @@ function TopicGraph($http, $stateParams, TopicNotifier, TooltipFactory) {
                 .attr('width', w)
                 .attr('height', h);
 
-           $http.get('/george/topicgraph/' + $stateParams.college).then(function(response) {
+           $http.get('/api/topicgraph/' + $stateParams.college).then(function(response) {
                 render(response.data);
             }, function(error) {
                 alert('error');
@@ -186,7 +186,7 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
     return {
         restrict: 'E',
         scope: {},
-        templateUrl: 'george/templates/keyword-frequency-graph.html',
+        templateUrl: 'partials/keyword-frequency-graph.html',
         controller: function($scope) {
 
         },
@@ -330,7 +330,7 @@ function KeywordFrequencyGraph($http, $stateParams, TopicNotifier, TooltipFactor
 
                 }
 
-                $http.get('/george/keyword/activity/' + payload.id, options).then(
+                $http.get('/api/keyword/activity/' + payload.id, options).then(
                     function(response) {
                         function transform(i) {
                             return {
@@ -351,7 +351,7 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
     return {
         restrict: 'E',
         scope: {},
-        templateUrl: 'george/templates/sentiment-table.html',
+        templateUrl: 'partials/sentiment-table.html',
         controller: function($scope) {
 
         },
@@ -461,7 +461,7 @@ function SentimentTable($http, $stateParams, TopicNotifier, TooltipFactory) {
                     }
                 }
 
-                $http.get('/george/sentiment/' + payload.id, options).then(
+                $http.get('/api/sentiment/' + payload.id, options).then(
                     function(response) {
                         render(response.data);
                 });
